@@ -1,10 +1,19 @@
-import React, { useRef, useMemo, useState, useCallback } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Html } from '@react-three/drei'
+import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react'
+import { Canvas, useFrame, useLoader, extend } from '@react-three/fiber'
+import { OrbitControls, Html, useTexture, shaderMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 
+// NASA Blue Marble & related textures hosted on CDN
+const EARTH_TEXTURES = {
+  day: 'https://unpkg.com/three-globe@2.41.12/example/img/earth-blue-marble.jpg',
+  night: 'https://unpkg.com/three-globe@2.41.12/example/img/earth-night.jpg',
+  bump: 'https://unpkg.com/three-globe@2.41.12/example/img/earth-topology.png',
+  clouds: 'https://unpkg.com/three-globe@2.41.12/example/img/earth-clouds.png',
+  water: 'https://unpkg.com/three-globe@2.41.12/example/img/earth-water.png',
+}
+
 // Convert lat/lon to 3D position on sphere
-function latLonToVector3(lat, lon, radius = 1.01) {
+function latLonToVector3(lat, lon, radius = 1.012) {
   const phi = (90 - lat) * (Math.PI / 180)
   const theta = (lon + 180) * (Math.PI / 180)
   return new THREE.Vector3(
@@ -14,236 +23,256 @@ function latLonToVector3(lat, lon, radius = 1.01) {
   )
 }
 
-// Earth sphere with custom shader for a nice look
+// Atmosphere shader for realistic glow
+const AtmosphereMaterial = shaderMaterial(
+  { color: new THREE.Color('#4da6ff') },
+  // vertex
+  `varying vec3 vNormal;
+   varying vec3 vPosition;
+   void main() {
+     vNormal = normalize(normalMatrix * normal);
+     vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+   }`,
+  // fragment
+  `uniform vec3 color;
+   varying vec3 vNormal;
+   varying vec3 vPosition;
+   void main() {
+     vec3 viewDir = normalize(-vPosition);
+     float intensity = pow(0.65 - dot(vNormal, viewDir), 3.0);
+     gl_FragColor = vec4(color, intensity * 0.8);
+   }`
+)
+
+extend({ AtmosphereMaterial })
+
+// Earth with NASA textures
 function Earth() {
   const meshRef = useRef()
   const cloudsRef = useRef()
+  const [texturesLoaded, setTexturesLoaded] = useState(false)
 
-  // Create Earth texture procedurally with canvas
-  const earthTexture = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 2048
-    canvas.height = 1024
-    const ctx = canvas.getContext('2d')
+  // Load textures
+  const dayMap = useLoader(THREE.TextureLoader, EARTH_TEXTURES.day)
+  const nightMap = useLoader(THREE.TextureLoader, EARTH_TEXTURES.night)
+  const bumpMap = useLoader(THREE.TextureLoader, EARTH_TEXTURES.bump)
+  const cloudsMap = useLoader(THREE.TextureLoader, EARTH_TEXTURES.clouds)
+  const waterMap = useLoader(THREE.TextureLoader, EARTH_TEXTURES.water)
 
-    // Ocean base
-    const oceanGrad = ctx.createLinearGradient(0, 0, 0, 1024)
-    oceanGrad.addColorStop(0, '#1a3a5c')
-    oceanGrad.addColorStop(0.3, '#1e4d7a')
-    oceanGrad.addColorStop(0.5, '#1a5276')
-    oceanGrad.addColorStop(0.7, '#1e4d7a')
-    oceanGrad.addColorStop(1, '#1a3a5c')
-    ctx.fillStyle = oceanGrad
-    ctx.fillRect(0, 0, 2048, 1024)
-
-    // Add subtle ocean texture
-    for (let i = 0; i < 3000; i++) {
-      const x = Math.random() * 2048
-      const y = Math.random() * 1024
-      ctx.fillStyle = `rgba(30,80,130,${Math.random() * 0.15})`
-      ctx.fillRect(x, y, 2 + Math.random() * 4, 1 + Math.random() * 2)
-    }
-
-    // Simplified continent shapes (rough approximations)
-    const continents = [
-      // North America
-      { path: [[380,180],[420,160],[480,140],[540,150],[560,180],[580,220],[560,280],[540,320],[500,350],[480,380],[440,400],[400,380],[360,340],[340,280],[350,240],[360,200]], color: '#2d5a27' },
-      // South America
-      { path: [[480,400],[520,420],[540,460],[560,500],[560,560],[540,620],[520,680],[500,720],[480,740],[460,720],[440,680],[430,620],[420,560],[430,500],[450,440],[460,420]], color: '#3a6b33' },
-      // Europe
-      { path: [[920,160],[960,150],[1000,140],[1040,150],[1060,170],[1080,200],[1060,220],[1040,240],[1000,250],[960,240],[940,220],[920,200],[910,180]], color: '#4a7a42' },
-      // Africa
-      { path: [[940,260],[980,250],[1020,260],[1060,280],[1080,320],[1100,380],[1100,440],[1080,500],[1060,560],[1040,600],[1000,620],[960,600],[940,560],[920,500],[910,440],[920,380],[930,320]], color: '#5a8a4a' },
-      // Asia
-      { path: [[1100,100],[1200,80],[1300,90],[1400,100],[1500,120],[1560,160],[1580,200],[1560,240],[1520,280],[1480,300],[1400,320],[1300,300],[1200,280],[1140,260],[1100,220],[1080,180],[1090,140]], color: '#3d7035' },
-      // Australia
-      { path: [[1480,500],[1540,480],[1600,490],[1640,520],[1640,560],[1620,600],[1580,620],[1540,610],[1500,580],[1480,540]], color: '#8B6914' },
-      // Greenland
-      { path: [[560,80],[600,60],[640,60],[660,80],[660,120],[640,140],[600,140],[570,120]], color: '#e8e8e8' },
-      // Antarctica (ice)
-      { path: [[0,920],[400,940],[800,950],[1200,950],[1600,940],[2048,930],[2048,1024],[0,1024]], color: '#e0e8f0' },
-    ]
-
-    continents.forEach(c => {
-      ctx.fillStyle = c.color
-      ctx.beginPath()
-      c.path.forEach(([x, y], i) => {
-        if (i === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
+  useEffect(() => {
+    if (dayMap && nightMap && bumpMap) {
+      // Improve texture quality
+      ;[dayMap, nightMap, bumpMap, cloudsMap, waterMap].forEach(t => {
+        if (t) {
+          t.colorSpace = THREE.SRGBColorSpace
+          t.anisotropy = 8
+        }
       })
-      ctx.closePath()
-      ctx.fill()
+      setTexturesLoaded(true)
+    }
+  }, [dayMap, nightMap, bumpMap, cloudsMap, waterMap])
 
-      // Add terrain texture
-      ctx.save()
-      ctx.clip()
-      for (let i = 0; i < 500; i++) {
-        const x = c.path[0][0] + (Math.random() - 0.3) * 400
-        const y = c.path[0][1] + (Math.random() - 0.3) * 400
-        const shade = Math.random() > 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-        ctx.fillStyle = shade
-        ctx.fillRect(x, y, 2 + Math.random() * 6, 2 + Math.random() * 6)
-      }
-      ctx.restore()
+  // Custom shader for day/night blending based on light direction
+  const earthMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        dayTexture: { value: dayMap },
+        nightTexture: { value: nightMap },
+        bumpTexture: { value: bumpMap },
+        waterTexture: { value: waterMap },
+        sunDirection: { value: new THREE.Vector3(5, 3, 5).normalize() },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vWorldPosition;
+        void main() {
+          vUv = uv;
+          vNormal = normalize(normalMatrix * normal);
+          vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D dayTexture;
+        uniform sampler2D nightTexture;
+        uniform sampler2D waterTexture;
+        uniform vec3 sunDirection;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vWorldPosition;
+        void main() {
+          vec3 normal = normalize(vNormal);
+          float sunDot = dot(normal, sunDirection);
+
+          // Smooth transition between day and night
+          float dayFactor = smoothstep(-0.15, 0.25, sunDot);
+
+          vec4 dayColor = texture2D(dayTexture, vUv);
+          vec4 nightColor = texture2D(nightTexture, vUv);
+          float water = texture2D(waterTexture, vUv).r;
+
+          // Day side: standard lighting with specular on water
+          float diffuse = max(0.0, sunDot);
+          vec3 dayLit = dayColor.rgb * (0.15 + 0.85 * diffuse);
+
+          // Add subtle specular highlight on water
+          vec3 viewDir = normalize(cameraPosition - vWorldPosition);
+          vec3 halfDir = normalize(sunDirection + viewDir);
+          float spec = pow(max(dot(normal, halfDir), 0.0), 64.0) * water * 0.5;
+          dayLit += vec3(spec);
+
+          // Night side: city lights glow
+          vec3 nightLit = nightColor.rgb * 1.5;
+
+          // Blend
+          vec3 finalColor = mix(nightLit, dayLit, dayFactor);
+
+          // Atmosphere rim lighting
+          float rim = 1.0 - max(dot(normal, viewDir), 0.0);
+          float rimFactor = pow(rim, 4.0) * 0.3;
+          finalColor += vec3(0.3, 0.5, 1.0) * rimFactor * dayFactor;
+
+          gl_FragColor = vec4(finalColor, 1.0);
+        }
+      `,
     })
-
-    // Grid lines (subtle)
-    ctx.strokeStyle = 'rgba(100,150,200,0.08)'
-    ctx.lineWidth = 0.5
-    for (let lat = 0; lat <= 1024; lat += 1024 / 18) {
-      ctx.beginPath()
-      ctx.moveTo(0, lat)
-      ctx.lineTo(2048, lat)
-      ctx.stroke()
-    }
-    for (let lon = 0; lon <= 2048; lon += 2048 / 36) {
-      ctx.beginPath()
-      ctx.moveTo(lon, 0)
-      ctx.lineTo(lon, 1024)
-      ctx.stroke()
-    }
-
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.needsUpdate = true
-    return texture
-  }, [])
-
-  // Cloud texture
-  const cloudTexture = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1024
-    canvas.height = 512
-    const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, 1024, 512)
-
-    for (let i = 0; i < 80; i++) {
-      const x = Math.random() * 1024
-      const y = Math.random() * 512
-      const r = 20 + Math.random() * 60
-      const grad = ctx.createRadialGradient(x, y, 0, x, y, r)
-      grad.addColorStop(0, `rgba(255,255,255,${0.1 + Math.random() * 0.15})`)
-      grad.addColorStop(1, 'rgba(255,255,255,0)')
-      ctx.fillStyle = grad
-      ctx.fillRect(x - r, y - r, r * 2, r * 2)
-    }
-
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.needsUpdate = true
-    return texture
-  }, [])
+  }, [dayMap, nightMap, bumpMap, waterMap])
 
   useFrame((_, delta) => {
     if (cloudsRef.current) {
-      cloudsRef.current.rotation.y += delta * 0.008
+      cloudsRef.current.rotation.y += delta * 0.006
     }
   })
 
   return (
     <group>
-      {/* Atmosphere glow */}
-      <mesh>
-        <sphereGeometry args={[1.15, 64, 64]} />
-        <meshBasicMaterial
-          color="#4a90d9"
-          transparent
-          opacity={0.08}
-          side={THREE.BackSide}
-        />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[1.08, 64, 64]} />
-        <meshBasicMaterial
-          color="#87ceeb"
-          transparent
-          opacity={0.12}
-          side={THREE.BackSide}
-        />
-      </mesh>
-
-      {/* Earth */}
-      <mesh ref={meshRef}>
+      {/* Outer atmosphere glow */}
+      <mesh scale={[1.18, 1.18, 1.18]}>
         <sphereGeometry args={[1, 64, 64]} />
-        <meshStandardMaterial
-          map={earthTexture}
-          roughness={0.8}
-          metalness={0.1}
-        />
-      </mesh>
-
-      {/* Clouds */}
-      <mesh ref={cloudsRef}>
-        <sphereGeometry args={[1.02, 64, 64]} />
-        <meshStandardMaterial
-          map={cloudTexture}
+        <atmosphereMaterial
+          color="#4da6ff"
           transparent
-          opacity={0.4}
+          side={THREE.BackSide}
           depthWrite={false}
         />
       </mesh>
+
+      {/* Inner atmosphere rim */}
+      <mesh scale={[1.05, 1.05, 1.05]}>
+        <sphereGeometry args={[1, 64, 64]} />
+        <atmosphereMaterial
+          color="#88ccff"
+          transparent
+          side={THREE.BackSide}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Earth surface */}
+      <mesh ref={meshRef} material={earthMaterial}>
+        <sphereGeometry args={[1, 128, 128]} />
+      </mesh>
+
+      {/* Cloud layer */}
+      {cloudsMap && (
+        <mesh ref={cloudsRef}>
+          <sphereGeometry args={[1.008, 64, 64]} />
+          <meshStandardMaterial
+            map={cloudsMap}
+            transparent
+            opacity={0.25}
+            depthWrite={false}
+            alphaMap={cloudsMap}
+          />
+        </mesh>
+      )}
     </group>
   )
 }
 
-// Location pin marker
+// Location pin with animated pulse
 function LocationPin({ position, city, isHovered, onHover, onClick }) {
-  const meshRef = useRef()
+  const groupRef = useRef()
+  const pulseRef = useRef()
   const [hoverLocal, setHoverLocal] = useState(false)
   const active = isHovered || hoverLocal
 
-  useFrame((_, delta) => {
-    if (meshRef.current) {
-      const target = active ? 1.3 : 1
-      meshRef.current.scale.lerp(new THREE.Vector3(target, target, target), delta * 8)
+  // Orient pin to point outward from globe center
+  const lookAtCenter = useMemo(() => {
+    const dir = position.clone().normalize()
+    const up = new THREE.Vector3(0, 1, 0)
+    const quaternion = new THREE.Quaternion()
+    const matrix = new THREE.Matrix4()
+    matrix.lookAt(new THREE.Vector3(0, 0, 0), dir, up)
+    quaternion.setFromRotationMatrix(matrix)
+    return quaternion
+  }, [position])
+
+  useFrame((state, delta) => {
+    if (pulseRef.current) {
+      const t = state.clock.elapsedTime
+      const scale = 1 + Math.sin(t * 3) * 0.3
+      pulseRef.current.scale.set(scale, scale, scale)
+      pulseRef.current.material.opacity = 0.4 - Math.sin(t * 3) * 0.2
     }
   })
 
   return (
     <group position={position.toArray()}>
+      {/* Pin dot */}
       <mesh
-        ref={meshRef}
+        ref={groupRef}
         onPointerOver={(e) => { e.stopPropagation(); setHoverLocal(true); onHover?.(city.name) }}
         onPointerOut={() => { setHoverLocal(false); onHover?.(null) }}
         onClick={(e) => { e.stopPropagation(); onClick?.(city) }}
       >
-        <sphereGeometry args={[0.025, 16, 16]} />
-        <meshStandardMaterial
-          color={active ? '#FF6B35' : '#FF4444'}
-          emissive={active ? '#FF6B35' : '#FF4444'}
-          emissiveIntensity={active ? 0.8 : 0.4}
+        <sphereGeometry args={[0.018, 16, 16]} />
+        <meshBasicMaterial
+          color={active ? '#FF6B35' : '#FF3333'}
         />
       </mesh>
 
-      {/* Pulse ring */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.03, 0.04, 32]} />
+      {/* Animated pulse ring */}
+      <mesh ref={pulseRef}>
+        <sphereGeometry args={[0.028, 16, 16]} />
         <meshBasicMaterial
           color="#FF4444"
           transparent
-          opacity={active ? 0.6 : 0.3}
-          side={THREE.DoubleSide}
+          opacity={0.3}
         />
       </mesh>
+
+      {/* Vertical pin line */}
+      {active && (
+        <mesh position={position.clone().normalize().multiplyScalar(0.03).toArray()}>
+          <cylinderGeometry args={[0.002, 0.002, 0.04, 8]} />
+          <meshBasicMaterial color="#FF6B35" />
+        </mesh>
+      )}
 
       {/* Label */}
       {active && (
         <Html
-          position={[0, 0.06, 0]}
+          position={position.clone().normalize().multiplyScalar(0.08).toArray()}
           center
-          distanceFactor={3}
+          distanceFactor={2.5}
           style={{ pointerEvents: 'none' }}
         >
           <div style={{
-            background: 'rgba(0,0,0,0.75)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(12px)',
             color: '#fff',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            fontFamily: 'system-ui, sans-serif',
-            fontWeight: '500',
+            padding: '8px 14px',
+            borderRadius: '10px',
+            fontSize: '14px',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontWeight: '600',
             whiteSpace: 'nowrap',
-            border: '1px solid rgba(255,255,255,0.15)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            letterSpacing: '0.02em',
           }}>
             {city.label || city.name}
           </div>
@@ -255,33 +284,71 @@ function LocationPin({ position, city, isHovered, onHover, onClick }) {
 
 // Stars background
 function Stars() {
-  const points = useMemo(() => {
-    const positions = new Float32Array(3000)
-    for (let i = 0; i < 3000; i++) {
-      positions[i] = (Math.random() - 0.5) * 50
+  const ref = useRef()
+  const positions = useMemo(() => {
+    const arr = new Float32Array(6000)
+    for (let i = 0; i < 6000; i += 3) {
+      const r = 30 + Math.random() * 30
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos(2 * Math.random() - 1)
+      arr[i] = r * Math.sin(phi) * Math.cos(theta)
+      arr[i + 1] = r * Math.sin(phi) * Math.sin(theta)
+      arr[i + 2] = r * Math.cos(phi)
     }
-    return positions
+    return arr
+  }, [])
+
+  const sizes = useMemo(() => {
+    const arr = new Float32Array(2000)
+    for (let i = 0; i < 2000; i++) {
+      arr[i] = 0.03 + Math.random() * 0.08
+    }
+    return arr
   }, [])
 
   return (
-    <points>
+    <points ref={ref}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={1000}
-          array={points}
-          itemSize={3}
-        />
+        <bufferAttribute attach="attributes-position" count={2000} array={positions} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial size={0.05} color="#ffffff" sizeAttenuation transparent opacity={0.8} />
+      <pointsMaterial
+        size={0.06}
+        color="#ffffff"
+        sizeAttenuation
+        transparent
+        opacity={0.9}
+      />
     </points>
+  )
+}
+
+// Loading fallback inside canvas
+function GlobeLoading() {
+  return (
+    <Html center>
+      <div style={{
+        color: 'rgba(255,255,255,0.7)',
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: '16px',
+        textAlign: 'center',
+      }}>
+        <div style={{
+          width: 32, height: 32, margin: '0 auto 12px',
+          border: '2px solid rgba(255,255,255,0.2)',
+          borderTopColor: 'rgba(255,255,255,0.8)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+        }} />
+        Loading Earth...
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </Html>
   )
 }
 
 // Main globe scene
 function GlobeScene({ cities, onSelectCity }) {
   const [hoveredCity, setHoveredCity] = useState(null)
-  const controlsRef = useRef()
 
   const handleCityClick = useCallback((city) => {
     onSelectCity(city)
@@ -289,13 +356,17 @@ function GlobeScene({ cities, onSelectCity }) {
 
   return (
     <>
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[5, 3, 5]} intensity={1.2} />
-      <directionalLight position={[-3, -1, -3]} intensity={0.3} color="#4a6fa5" />
-      <pointLight position={[0, 0, 3]} intensity={0.5} color="#ffffff" />
+      {/* Lighting to match sun position */}
+      <ambientLight intensity={0.08} />
+      <directionalLight position={[5, 3, 5]} intensity={2.0} color="#fffaf0" />
+      <directionalLight position={[-5, -2, -5]} intensity={0.15} color="#334466" />
+      <hemisphereLight args={['#446688', '#000000', 0.2]} />
 
       <Stars />
-      <Earth />
+
+      <React.Suspense fallback={<GlobeLoading />}>
+        <Earth />
+      </React.Suspense>
 
       {cities.filter(c => c.lat != null).map(city => (
         <LocationPin
@@ -309,17 +380,16 @@ function GlobeScene({ cities, onSelectCity }) {
       ))}
 
       <OrbitControls
-        ref={controlsRef}
         enableZoom={true}
         enablePan={false}
-        minDistance={1.5}
+        minDistance={1.4}
         maxDistance={4}
-        rotateSpeed={0.5}
-        zoomSpeed={0.8}
+        rotateSpeed={0.4}
+        zoomSpeed={0.6}
         autoRotate
-        autoRotateSpeed={0.3}
+        autoRotateSpeed={0.25}
         enableDamping
-        dampingFactor={0.05}
+        dampingFactor={0.08}
       />
     </>
   )
@@ -327,11 +397,12 @@ function GlobeScene({ cities, onSelectCity }) {
 
 export default function GlobeView({ cities, onSelectCity }) {
   return (
-    <div className="w-full h-full" style={{ background: 'radial-gradient(ellipse at center, #0a1628 0%, #050a15 100%)' }}>
+    <div className="w-full h-full" style={{ background: 'radial-gradient(ellipse at center, #080e1a 0%, #020408 100%)' }}>
       <Canvas
-        camera={{ position: [0, 0, 2.8], fov: 45 }}
+        camera={{ position: [0, 0.5, 2.5], fov: 45 }}
         style={{ width: '100%', height: '100%' }}
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+        dpr={[1, 2]}
       >
         <GlobeScene cities={cities} onSelectCity={onSelectCity} />
       </Canvas>
@@ -341,7 +412,7 @@ export default function GlobeView({ cities, onSelectCity }) {
         <h1 className="font-serif text-3xl font-light text-white/90 tracking-wider drop-shadow-lg">
           What's That Outside?
         </h1>
-        <p className="text-sm text-white/50 mt-2 font-sans font-light tracking-wide">
+        <p className="text-sm text-white/40 mt-2 font-sans font-light tracking-wide">
           Spin the globe. Tap a city.
         </p>
       </div>
@@ -350,16 +421,16 @@ export default function GlobeView({ cities, onSelectCity }) {
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
         <button
           onClick={() => onSelectCity({ name: 'Auto', lat: null, lon: null })}
-          className="font-sans text-sm font-medium px-6 py-3 rounded-full transition-all duration-200"
+          className="font-sans text-sm font-medium px-6 py-3 rounded-full transition-all duration-200 hover:scale-105"
           style={{
-            background: 'rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.08)',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.2)',
+            border: '1px solid rgba(255,255,255,0.15)',
             color: 'rgba(255,255,255,0.85)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
           }}
-          onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.2)'}
-          onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
+          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
         >
           Use My Location
         </button>
