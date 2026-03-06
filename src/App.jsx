@@ -21,47 +21,73 @@ const CITY_PHOTOS = {
     'photo-1534430480872-3498386e7856', // NYC street
     'photo-1496442226666-8d4d0e62e6e9', // NYC brownstones
     'photo-1555109307-f7d9da25c244', // NYC residential
+    'photo-1518235506717-e1ed3306a89b', // Times Square
   ],
   'Atlanta': [
-    'photo-1575917649263-3151b03a6668', // Atlanta midtown
-    'photo-1588432415392-50e3a0e76e48', // Atlanta street
+    'photo-1575362337068-eb41af7cc7f5', // Atlanta skyline
+    'photo-1570742292682-34551661efbb', // Atlanta midtown
+    'photo-1548587558-281e0ef82982', // Atlanta downtown
   ],
   'Miami': [
     'photo-1535498730771-e735b998cd64', // Miami art deco
     'photo-1514214246283-d427a95c5d2f', // Miami palms
+    'photo-1533106497176-45ae19e68ba2', // Miami beach
   ],
   'Austin': [
-    'photo-1531218150217-54595bc2b934', // Austin street
-    'photo-1588993608743-ae498a57e99a', // Austin downtown
+    'photo-1588993608743-ae498a57e99a', // Austin congress ave
+    'photo-1570137555500-5a78ecce0abb', // Austin skyline
+    'photo-1558618666-fcd25c85f82e', // Austin downtown
   ],
   'San Francisco': [
     'photo-1521747116042-5a810fda9664', // SF houses
     'photo-1501594907352-04cda38ebc29', // SF street
+    'photo-1549346155-d3684e05e3be', // SF cable car
   ],
   'Seattle': [
-    'photo-1502175353174-a7a70e73b362', // Seattle
-    'photo-1516663713099-37eb20910dd8', // Seattle rain
+    'photo-1502175353174-a7a70e73b362', // Seattle skyline
+    'photo-1438401171849-74ac270044ee', // Pike Place Market area
+    'photo-1542223616-9de9adb5e3c8', // Seattle rain
   ],
   'London': [
     'photo-1513635269975-59663e0ac1ad', // London street
     'photo-1520986606214-8b456906c813', // London terraces
+    'photo-1486299267070-83823f5448dd', // London Big Ben
   ],
   'Lisbon': [
     'photo-1555881400-74d7acaacd8b', // Lisbon street
     'photo-1548707309-dcebeab9ea9b', // Lisbon tram
+    'photo-1573455494060-c5595004fb6c', // Lisbon skyline
   ],
   'Ho Chi Minh City': [
     'photo-1583417319070-4a69db38a482', // Vietnam street
     'photo-1559592413-7cec4d0cae2b', // HCM city
+    'photo-1557750255-c76072a7aee1', // Vietnam motorbikes
   ],
   'Barcelona': [
-    'photo-1583422409516-2895a77efded', // Barcelona
-    'photo-1539037116277-4db20889f2d7', // Barcelona street
+    'photo-1583422409516-2895a77efded', // La Rambla
+    'photo-1539037116277-4db20889f2d7', // Barcelona Gothic quarter
+    'photo-1562883676-8c7feb83f09b', // Barcelona street
   ],
   'Tokyo': [
-    'photo-1540959733332-eab4deabeeaf', // Tokyo street
+    'photo-1540959733332-eab4deabeeaf', // Tokyo crossing
     'photo-1503899036084-c55cdd92da26', // Tokyo night
+    'photo-1542051841857-5f90071e7989', // Tokyo neon
   ],
+}
+
+// City-specific animation types
+const CITY_ANIMATIONS = {
+  'New York': { type: 'urban-busy', elements: ['people', 'cars', 'neon'] },
+  'Atlanta': { type: 'urban', elements: ['people', 'cars'] },
+  'Miami': { type: 'tropical', elements: ['people', 'palms', 'birds'] },
+  'Austin': { type: 'lively', elements: ['people', 'music', 'cars'] },
+  'San Francisco': { type: 'urban', elements: ['people', 'cablecar'] },
+  'Seattle': { type: 'rainy-urban', elements: ['people', 'umbrellas'] },
+  'London': { type: 'classic', elements: ['people', 'bus', 'umbrellas'] },
+  'Lisbon': { type: 'charming', elements: ['people', 'tram'] },
+  'Ho Chi Minh City': { type: 'bustling', elements: ['scooters', 'people'] },
+  'Barcelona': { type: 'vibrant', elements: ['people', 'performers'] },
+  'Tokyo': { type: 'neon-city', elements: ['people', 'neon', 'trains'] },
 }
 
 function getUnsplashUrl(photoId) {
@@ -298,89 +324,407 @@ function StarsEffect({ timeOfDay }) {
   )
 }
 
-// --- Animated Car ---
+// --- City-specific Ambient Animations ---
 
-function CarEffect() {
-  const [cars, setCars] = useState([])
-  const carIdRef = useRef(0)
+function WalkingPerson({ id, goingRight, yPosition, duration, delay, scale, color }) {
+  return (
+    <div className="absolute" style={{
+      top: `${yPosition}%`,
+      left: goingRight ? '-6%' : '106%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      transform: `scale(${scale})`,
+      opacity: 0,
+    }}>
+      <svg width="28" height="52" viewBox="0 0 28 52" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
+      }}>
+        <circle cx="14" cy="6" r="5" fill={color} />
+        <rect x="10" y="11" width="8" height="18" rx="3" fill={color} />
+        <rect x="8" y="29" width="5" height="16" rx="2" fill={color} opacity="0.9"
+          style={{ animation: `legSwing ${duration * 0.08}s ease-in-out infinite alternate` }} />
+        <rect x="15" y="29" width="5" height="16" rx="2" fill={color} opacity="0.9"
+          style={{ animation: `legSwing ${duration * 0.08}s ease-in-out infinite alternate-reverse` }} />
+        <rect x="4" y="14" width="5" height="3" rx="1.5" fill={color} opacity="0.8"
+          style={{ animation: `armSwing ${duration * 0.08}s ease-in-out infinite alternate` }} />
+        <rect x="19" y="14" width="5" height="3" rx="1.5" fill={color} opacity="0.8"
+          style={{ animation: `armSwing ${duration * 0.08}s ease-in-out infinite alternate-reverse` }} />
+      </svg>
+    </div>
+  )
+}
+
+function AnimatedCar({ id, goingRight, yPosition, duration, delay, carColor, scale }) {
+  return (
+    <div className="absolute" style={{
+      top: `${yPosition}%`,
+      left: goingRight ? '-12%' : '112%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      transform: `scale(${scale})`,
+      opacity: 0,
+    }}>
+      <svg width="90" height="36" viewBox="0 0 90 36" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.4))',
+      }}>
+        <path d="M8,24 L8,18 Q8,15 12,15 L22,15 L30,6 Q31.5,4.5 34,4.5 L57,4.5 Q60,4.5 61.5,6 L72,15 L82,15 Q86,15 86,18 L86,24 Q86,27 84,27 L72,27 L72,24 Q72,20 66,20 Q60,20 60,24 L60,27 L33,27 L33,24 Q33,20 27,20 Q21,20 21,24 L21,27 L11,27 Q8,27 8,24 Z" fill={carColor} />
+        <path d="M33,7.5 L30,14 L45,14 L45,7.5 Z" fill="rgba(150,200,255,0.6)" />
+        <path d="M48,7.5 L48,14 L67,14 L60,7.5 Z" fill="rgba(150,200,255,0.6)" />
+        <circle cx="27" cy="26" r="6" fill="#222" />
+        <circle cx="27" cy="26" r="3" fill="#555" />
+        <circle cx="66" cy="26" r="6" fill="#222" />
+        <circle cx="66" cy="26" r="3" fill="#555" />
+        <rect x="82" y="16.5" width="5" height="4.5" rx="1.5" fill="#FFE4A0" opacity="0.8" />
+        <rect x="4.5" y="18" width="3" height="3" rx="0.75" fill="#FF4444" opacity="0.8" />
+      </svg>
+    </div>
+  )
+}
+
+function NeonSign({ x, y, width, height, color, delay, label }) {
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, top: `${y}%`,
+      width, height,
+    }}>
+      <div style={{
+        width: '100%', height: '100%',
+        border: `2px solid ${color}`,
+        borderRadius: '4px',
+        boxShadow: `0 0 8px ${color}, 0 0 20px ${color}40, inset 0 0 8px ${color}30`,
+        animation: `neonFlicker ${2 + delay}s ease-in-out infinite`,
+        animationDelay: `${delay}s`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {label && (
+          <span style={{
+            color, fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px',
+            textShadow: `0 0 6px ${color}, 0 0 12px ${color}`,
+          }}>{label}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ScooterSilhouette({ id, goingRight, yPosition, duration, delay, scale }) {
+  return (
+    <div className="absolute" style={{
+      top: `${yPosition}%`,
+      left: goingRight ? '-8%' : '108%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      transform: `scale(${scale})`,
+      opacity: 0,
+    }}>
+      <svg width="50" height="40" viewBox="0 0 50 40" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
+      }}>
+        <circle cx="10" cy="32" r="7" fill="#333" />
+        <circle cx="10" cy="32" r="3.5" fill="#666" />
+        <circle cx="40" cy="32" r="7" fill="#333" />
+        <circle cx="40" cy="32" r="3.5" fill="#666" />
+        <path d="M12,30 L20,16 L35,16 L38,30" fill="none" stroke="#444" strokeWidth="3" />
+        <rect x="18" y="10" width="12" height="8" rx="2" fill="#E74C3C" />
+        <circle cx="25" cy="6" r="4" fill="#DEB887" />
+        <rect x="44" y="28" width="4" height="2" rx="1" fill="#FFE4A0" />
+      </svg>
+    </div>
+  )
+}
+
+function BirdFlock({ delay }) {
+  return (
+    <div className="absolute" style={{
+      top: `${10 + Math.random() * 20}%`,
+      left: '-10%',
+      animation: `walkAcrossRight ${20 + Math.random() * 10}s ${delay}s linear forwards`,
+      opacity: 0,
+    }}>
+      <svg width="60" height="24" viewBox="0 0 60 24" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.2))' }}>
+        {[0, 15, 30, 8, 22, 40].map((bx, i) => (
+          <path key={i} d={`M${bx},${10 + (i % 3) * 3} Q${bx + 4},${6 + (i % 3) * 3} ${bx + 8},${10 + (i % 3) * 3} Q${bx + 4},${8 + (i % 3) * 3} ${bx},${10 + (i % 3) * 3}`}
+            fill="none" stroke="#333" strokeWidth="1.5"
+            style={{ animation: `birdFlap 0.6s ${i * 0.1}s ease-in-out infinite alternate` }} />
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+function MusicNotes({ x, delay }) {
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, bottom: '25%',
+      animation: `floatUp 4s ${delay}s ease-out infinite`,
+      opacity: 0,
+    }}>
+      <svg width="20" height="24" viewBox="0 0 20 24">
+        <text x="4" y="18" fontSize="18" fill="rgba(255,255,255,0.7)"
+          style={{ textShadow: '0 0 8px rgba(255,200,50,0.5)' }}>&#9835;</text>
+      </svg>
+    </div>
+  )
+}
+
+function PalmTreeSway({ x }) {
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, bottom: '8%',
+      transformOrigin: 'bottom center',
+      animation: `palmSway 5s ${Math.random() * 2}s ease-in-out infinite alternate`,
+    }}>
+      <svg width="40" height="80" viewBox="0 0 40 80" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }}>
+        <rect x="18" y="30" width="4" height="50" rx="2" fill="#5D4E37" />
+        <ellipse cx="20" cy="20" rx="18" ry="22" fill="rgba(34,120,60,0.7)" />
+        <path d="M20,5 Q5,15 2,30" fill="none" stroke="rgba(34,120,60,0.6)" strokeWidth="3" />
+        <path d="M20,5 Q35,15 38,30" fill="none" stroke="rgba(34,120,60,0.6)" strokeWidth="3" />
+        <path d="M20,8 Q10,20 4,35" fill="none" stroke="rgba(45,140,70,0.5)" strokeWidth="2" />
+        <path d="M20,8 Q30,20 36,35" fill="none" stroke="rgba(45,140,70,0.5)" strokeWidth="2" />
+      </svg>
+    </div>
+  )
+}
+
+function TramCar({ goingRight, duration, delay }) {
+  return (
+    <div className="absolute" style={{
+      top: '72%',
+      left: goingRight ? '-15%' : '115%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      opacity: 0,
+    }}>
+      <svg width="100" height="50" viewBox="0 0 100 50" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.4))',
+      }}>
+        <rect x="5" y="10" width="90" height="30" rx="5" fill="#E8C84A" />
+        <rect x="10" y="14" width="18" height="16" rx="2" fill="rgba(150,200,255,0.5)" />
+        <rect x="32" y="14" width="18" height="16" rx="2" fill="rgba(150,200,255,0.5)" />
+        <rect x="54" y="14" width="18" height="16" rx="2" fill="rgba(150,200,255,0.5)" />
+        <rect x="76" y="14" width="15" height="16" rx="2" fill="rgba(150,200,255,0.5)" />
+        <rect x="0" y="40" width="100" height="4" rx="2" fill="#333" />
+        <circle cx="20" cy="44" r="4" fill="#222" />
+        <circle cx="80" cy="44" r="4" fill="#222" />
+        <line x1="50" y1="0" x2="50" y2="10" stroke="#666" strokeWidth="2" />
+      </svg>
+    </div>
+  )
+}
+
+function DoubleDecker({ goingRight, duration, delay }) {
+  return (
+    <div className="absolute" style={{
+      top: '70%',
+      left: goingRight ? '-15%' : '115%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      opacity: 0,
+    }}>
+      <svg width="100" height="55" viewBox="0 0 100 55" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.4))',
+      }}>
+        <rect x="5" y="22" width="90" height="24" rx="3" fill="#CC1100" />
+        <rect x="5" y="4" width="90" height="20" rx="3" fill="#DD2211" />
+        <rect x="10" y="7" width="14" height="12" rx="1" fill="rgba(150,200,255,0.5)" />
+        <rect x="28" y="7" width="14" height="12" rx="1" fill="rgba(150,200,255,0.5)" />
+        <rect x="46" y="7" width="14" height="12" rx="1" fill="rgba(150,200,255,0.5)" />
+        <rect x="64" y="7" width="14" height="12" rx="1" fill="rgba(150,200,255,0.5)" />
+        <rect x="10" y="27" width="14" height="12" rx="1" fill="rgba(150,200,255,0.5)" />
+        <rect x="28" y="27" width="14" height="12" rx="1" fill="rgba(150,200,255,0.5)" />
+        <rect x="46" y="27" width="14" height="12" rx="1" fill="rgba(150,200,255,0.5)" />
+        <rect x="82" y="25" width="10" height="20" rx="2" fill="#AA0000" />
+        <circle cx="18" cy="50" r="5" fill="#222" />
+        <circle cx="18" cy="50" r="2.5" fill="#555" />
+        <circle cx="78" cy="50" r="5" fill="#222" />
+        <circle cx="78" cy="50" r="2.5" fill="#555" />
+        <rect x="91" y="28" width="4" height="3" rx="1" fill="#FFE4A0" opacity="0.8" />
+      </svg>
+    </div>
+  )
+}
+
+function CityAnimations({ cityName, timeOfDay }) {
+  const [entities, setEntities] = useState([])
+  const idRef = useRef(0)
+  const config = CITY_ANIMATIONS[cityName] || CITY_ANIMATIONS['New York']
+  const isNight = timeOfDay === 'night' || timeOfDay === 'evening'
+
+  const personColors = ['#2C3E50', '#8B4513', '#34495E', '#1A1A2E', '#4A3728', '#2D2D2D', '#5B3A29', '#3C3C3C']
 
   useEffect(() => {
-    const spawnCar = () => {
-      const id = carIdRef.current++
+    setEntities([])
+    idRef.current = 0
+
+    const spawn = () => {
+      const id = idRef.current++
+      const elements = config.elements
+      const element = elements[Math.floor(Math.random() * elements.length)]
       const goingRight = Math.random() > 0.5
-      const yPosition = 78 + Math.random() * 12 // bottom 22% of scene
-      const duration = 8 + Math.random() * 6 // 8-14 seconds to cross
-      const carColor = ['#2C3E50', '#E74C3C', '#3498DB', '#F39C12', '#1ABC9C', '#8E44AD', '#ECF0F1', '#2ECC71'][Math.floor(Math.random() * 8)]
-      const carSize = 0.6 + Math.random() * 0.4 // scale variation
+      const delay = 0
 
-      setCars(prev => [...prev, { id, goingRight, yPosition, duration, carColor, carSize }])
+      let entity = { id, element, goingRight, delay, spawnTime: Date.now() }
 
-      // Remove car after animation completes
-      setTimeout(() => {
-        setCars(prev => prev.filter(c => c.id !== id))
-      }, duration * 1000 + 500)
+      switch (element) {
+        case 'people':
+        case 'umbrellas':
+        case 'performers':
+          entity.yPosition = 75 + Math.random() * 15
+          entity.duration = 12 + Math.random() * 10
+          entity.scale = 0.7 + Math.random() * 0.5
+          entity.color = personColors[Math.floor(Math.random() * personColors.length)]
+          break
+        case 'cars':
+          entity.yPosition = 80 + Math.random() * 10
+          entity.duration = 6 + Math.random() * 5
+          entity.scale = 0.8 + Math.random() * 0.4
+          entity.carColor = ['#2C3E50', '#E74C3C', '#3498DB', '#F39C12', '#1ABC9C', '#ECF0F1'][Math.floor(Math.random() * 6)]
+          break
+        case 'scooters':
+          entity.yPosition = 78 + Math.random() * 12
+          entity.duration = 5 + Math.random() * 4
+          entity.scale = 0.8 + Math.random() * 0.3
+          break
+        case 'neon':
+          entity.x = 10 + Math.random() * 70
+          entity.y = 15 + Math.random() * 35
+          entity.neonColor = ['#FF1493', '#00FFFF', '#FF4500', '#ADFF2F', '#FF69B4', '#7B68EE'][Math.floor(Math.random() * 6)]
+          entity.label = ['BAR', 'OPEN', 'EAT', 'LIVE', '24H', 'CLUB', 'JAZZ'][Math.floor(Math.random() * 7)]
+          break
+        case 'birds':
+          entity.delay = Math.random() * 3
+          break
+        case 'music':
+          entity.x = 20 + Math.random() * 60
+          entity.delay = Math.random() * 2
+          break
+        case 'palms':
+          entity.x = Math.random() * 90
+          break
+        case 'tram':
+          entity.duration = 15 + Math.random() * 5
+          break
+        case 'bus':
+          entity.duration = 12 + Math.random() * 5
+          break
+        case 'cablecar':
+          entity.duration = 18 + Math.random() * 5
+          entity.goingRight = true
+          break
+        case 'trains':
+          entity.duration = 5 + Math.random() * 3
+          entity.yPosition = 82 + Math.random() * 8
+          break
+        default:
+          break
+      }
+
+      setEntities(prev => {
+        // Limit entities to avoid performance issues
+        const filtered = prev.filter(e => Date.now() - e.spawnTime < 30000)
+        return [...filtered.slice(-12), entity]
+      })
     }
 
-    // Spawn a car every 6-15 seconds
-    const scheduleNext = () => {
-      const delay = 6000 + Math.random() * 9000
-      return setTimeout(() => {
-        spawnCar()
-        timerRef.current = scheduleNext()
-      }, delay)
-    }
+    // Spawn first few quickly
+    const initialTimer = setTimeout(() => {
+      spawn()
+      setTimeout(() => spawn(), 1500)
+      setTimeout(() => spawn(), 3000)
+    }, 1000)
 
-    const timerRef = { current: null }
-
-    // First car after 3-6 seconds
-    timerRef.current = setTimeout(() => {
-      spawnCar()
-      timerRef.current = scheduleNext()
+    // Then regularly
+    const interval = setInterval(() => {
+      spawn()
     }, 3000 + Math.random() * 3000)
 
-    return () => clearTimeout(timerRef.current)
-  }, [])
+    return () => {
+      clearTimeout(initialTimer)
+      clearInterval(interval)
+    }
+  }, [cityName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-      {cars.map(car => (
-        <div key={car.id} className="absolute" style={{
-          top: `${car.yPosition}%`,
-          left: car.goingRight ? '-8%' : '108%',
-          animation: `carDrive${car.goingRight ? 'Right' : 'Left'} ${car.duration}s linear forwards`,
-          transform: `scale(${car.carSize})`,
-        }}>
-          {/* Simple car silhouette */}
-          <svg width="60" height="24" viewBox="0 0 60 24" style={{
-            transform: car.goingRight ? 'scaleX(1)' : 'scaleX(-1)',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-          }}>
-            {/* Car body */}
-            <path d="M5,16 L5,12 Q5,10 8,10 L15,10 L20,4 Q21,3 23,3 L38,3 Q40,3 41,4 L48,10 L55,10 Q58,10 58,12 L58,16 Q58,18 56,18 L48,18 L48,16 Q48,13 44,13 Q40,13 40,16 L40,18 L22,18 L22,16 Q22,13 18,13 Q14,13 14,16 L14,18 L7,18 Q5,18 5,16 Z" fill={car.carColor} />
-            {/* Windows */}
-            <path d="M22,5 L20,9 L30,9 L30,5 Z" fill="rgba(150,200,255,0.6)" />
-            <path d="M32,5 L32,9 L45,9 L40,5 Z" fill="rgba(150,200,255,0.6)" />
-            {/* Front wheel */}
-            <circle cx="18" cy="17" r="4" fill="#222" />
-            <circle cx="18" cy="17" r="2" fill="#555" />
-            {/* Rear wheel */}
-            <circle cx="44" cy="17" r="4" fill="#222" />
-            <circle cx="44" cy="17" r="2" fill="#555" />
-            {/* Headlight */}
-            <rect x="55" y="11" width="3" height="3" rx="1" fill="#FFE4A0" opacity="0.8" />
-            {/* Taillight */}
-            <rect x="3" y="12" width="2" height="2" rx="0.5" fill="#FF4444" opacity="0.8" />
-          </svg>
-        </div>
-      ))}
-      <style>{`
-        @keyframes carDriveRight {
-          0% { left: -8%; }
-          100% { left: 108%; }
+      {entities.map(entity => {
+        switch (entity.element) {
+          case 'people':
+          case 'performers':
+            return <WalkingPerson key={entity.id} {...entity} />
+          case 'umbrellas':
+            return <WalkingPerson key={entity.id} {...entity} color="#4A6FA5" />
+          case 'cars':
+            return <AnimatedCar key={entity.id} {...entity} />
+          case 'scooters':
+            return <ScooterSilhouette key={entity.id} {...entity} />
+          case 'neon':
+            return isNight || timeOfDay === 'dusk' ? (
+              <NeonSign key={entity.id} x={entity.x} y={entity.y}
+                width="60px" height="24px" color={entity.neonColor}
+                delay={entity.delay || 0} label={entity.label} />
+            ) : null
+          case 'birds':
+            return !isNight ? <BirdFlock key={entity.id} delay={entity.delay} /> : null
+          case 'music':
+            return <MusicNotes key={entity.id} x={entity.x} delay={entity.delay} />
+          case 'palms':
+            return <PalmTreeSway key={entity.id} x={entity.x} />
+          case 'tram':
+          case 'cablecar':
+            return <TramCar key={entity.id} goingRight={entity.goingRight} duration={entity.duration} delay={0} />
+          case 'bus':
+            return <DoubleDecker key={entity.id} goingRight={entity.goingRight} duration={entity.duration} delay={0} />
+          case 'trains':
+            return <AnimatedCar key={entity.id} {...entity} carColor="#CCCCCC" scale={1.2} />
+          default:
+            return null
         }
-        @keyframes carDriveLeft {
-          0% { left: 108%; }
-          100% { left: -8%; }
+      })}
+      <style>{`
+        @keyframes walkAcrossRight {
+          0% { left: -10%; opacity: 0; }
+          3% { opacity: 0.85; }
+          97% { opacity: 0.85; }
+          100% { left: 110%; opacity: 0; }
+        }
+        @keyframes walkAcrossLeft {
+          0% { left: 110%; opacity: 0; }
+          3% { opacity: 0.85; }
+          97% { opacity: 0.85; }
+          100% { left: -10%; opacity: 0; }
+        }
+        @keyframes legSwing {
+          0% { transform: rotate(-12deg); }
+          100% { transform: rotate(12deg); }
+        }
+        @keyframes armSwing {
+          0% { transform: rotate(-8deg); }
+          100% { transform: rotate(8deg); }
+        }
+        @keyframes neonFlicker {
+          0%, 100% { opacity: 1; }
+          5% { opacity: 0.4; }
+          6% { opacity: 1; }
+          40% { opacity: 0.9; }
+          42% { opacity: 0.4; }
+          43% { opacity: 1; }
+          80% { opacity: 1; }
+          82% { opacity: 0.6; }
+          83% { opacity: 1; }
+        }
+        @keyframes birdFlap {
+          0% { transform: scaleY(1); }
+          100% { transform: scaleY(0.6); }
+        }
+        @keyframes floatUp {
+          0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+          15% { opacity: 0.7; }
+          85% { opacity: 0.5; }
+          100% { transform: translateY(-80px) rotate(15deg); opacity: 0; }
+        }
+        @keyframes palmSway {
+          0% { transform: rotate(-2deg); }
+          100% { transform: rotate(2deg); }
         }
       `}</style>
     </div>
@@ -391,17 +735,50 @@ function CarEffect() {
 
 function PhotoFallback({ cityName, weatherType, timeOfDay }) {
   const isNight = timeOfDay === 'night' || timeOfDay === 'evening'
-  const [photoLoaded, setPhotoLoaded] = useState(false)
-  const [photoUrl, setPhotoUrl] = useState(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [nextIndex, setNextIndex] = useState(null)
+  const [currentLoaded, setCurrentLoaded] = useState(false)
+  const [nextLoaded, setNextLoaded] = useState(false)
+  const [fading, setFading] = useState(false)
+  const photos = CITY_PHOTOS[cityName] || []
 
+  // Reset on city change
   useEffect(() => {
-    const photos = CITY_PHOTOS[cityName]
-    if (photos && photos.length > 0) {
-      const randomPhoto = photos[Math.floor(Math.random() * photos.length)]
-      setPhotoUrl(getUnsplashUrl(randomPhoto))
-      setPhotoLoaded(false)
+    const idx = Math.floor(Math.random() * photos.length)
+    setCurrentIndex(idx)
+    setNextIndex(null)
+    setCurrentLoaded(false)
+    setNextLoaded(false)
+    setFading(false)
+  }, [cityName]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Rotate photos every 10 seconds
+  useEffect(() => {
+    if (photos.length <= 1) return
+    const interval = setInterval(() => {
+      setNextIndex(prev => {
+        const next = (currentIndex + 1 + Math.floor(Math.random() * (photos.length - 1))) % photos.length
+        return next
+      })
+      setNextLoaded(false)
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [currentIndex, photos.length])
+
+  // When next photo loads, start crossfade
+  useEffect(() => {
+    if (nextLoaded && nextIndex !== null) {
+      setFading(true)
+      const timer = setTimeout(() => {
+        setCurrentIndex(nextIndex)
+        setCurrentLoaded(true)
+        setNextIndex(null)
+        setNextLoaded(false)
+        setFading(false)
+      }, 1200)
+      return () => clearTimeout(timer)
     }
-  }, [cityName])
+  }, [nextLoaded, nextIndex])
 
   // Sky gradient as base (always rendered)
   const skyGradients = {
@@ -427,14 +804,25 @@ function PhotoFallback({ cityName, weatherType, timeOfDay }) {
         background: skyGradients[key] || skyGradients['sunny-day'],
       }} />
 
-      {/* City photo background */}
-      {photoUrl && (
+      {/* Current city photo */}
+      {photos[currentIndex] && (
         <img
-          src={photoUrl}
+          src={getUnsplashUrl(photos[currentIndex])}
           alt=""
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
-          style={{ opacity: photoLoaded ? 1 : 0 }}
-          onLoad={() => setPhotoLoaded(true)}
+          style={{ opacity: currentLoaded ? (fading ? 0 : 1) : 0 }}
+          onLoad={() => setCurrentLoaded(true)}
+          crossOrigin="anonymous"
+        />
+      )}
+      {/* Next photo (crossfade in) */}
+      {nextIndex !== null && photos[nextIndex] && (
+        <img
+          src={getUnsplashUrl(photos[nextIndex])}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1200"
+          style={{ opacity: fading ? 1 : 0, transitionDuration: '1200ms' }}
+          onLoad={() => setNextLoaded(true)}
           crossOrigin="anonymous"
         />
       )}
@@ -826,7 +1214,7 @@ export default function App() {
 
             <WeatherEffects weatherType={weatherType} timeOfDay={timeOfDay} />
             <StarsEffect timeOfDay={timeOfDay} />
-            <CarEffect />
+            <CityAnimations cityName={location?.city || 'New York'} timeOfDay={timeOfDay} />
 
             {imageLoading && <ImageLoadingIndicator />}
 
