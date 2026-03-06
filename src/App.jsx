@@ -607,10 +607,10 @@ export default function App() {
   // Detect location via IP
   const detectLocation = useCallback(async () => {
     try {
-      const res = await fetch('http://ip-api.com/json/')
+      const res = await fetch('https://ipapi.co/json/')
       const data = await res.json()
-      if (data.status === 'success') {
-        return { city: data.city, lat: data.lat, lon: data.lon, tz: data.timezone }
+      if (data.city && data.latitude) {
+        return { city: data.city, lat: data.latitude, lon: data.longitude, tz: data.timezone }
       }
     } catch (e) { console.warn('IP geolocation failed:', e) }
     // Fallback to NYC
