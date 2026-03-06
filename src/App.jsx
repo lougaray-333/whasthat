@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
+
+const GlobeView = lazy(() => import('./Globe.jsx'))
 
 const CITIES = [
   { name: 'Auto', label: 'My Location', lat: null, lon: null },
@@ -1388,130 +1390,7 @@ function WindowFrame({ children, timeOfDay }) {
           <div className="absolute top-1 left-0 right-0 h-[1px] bg-white/5" />
         </div>
 
-        {/* Left curtain — layered sheer fabric with folds */}
-        <div className="absolute top-0 -left-4 h-full z-25 pointer-events-none" style={{
-          width: '14%',
-          minWidth: '60px',
-          maxWidth: '140px',
-          clipPath: 'url(#archClip)',
-          animation: 'curtainSwayLeft 6s ease-in-out infinite',
-          transformOrigin: 'top left',
-        }}>
-          {/* Main curtain fabric */}
-          <div className="absolute inset-0" style={{
-            background: `linear-gradient(90deg,
-              rgba(255,248,240,0.55) 0%,
-              rgba(255,248,240,0.35) 15%,
-              rgba(255,248,240,0.45) 30%,
-              rgba(255,248,240,0.25) 50%,
-              rgba(255,248,240,0.15) 70%,
-              rgba(255,248,240,0.05) 85%,
-              transparent 100%)`,
-          }} />
-          {/* Vertical fold lines */}
-          <div className="absolute inset-0" style={{
-            background: `repeating-linear-gradient(90deg,
-              transparent 0px,
-              rgba(200,190,175,0.12) 2px,
-              transparent 4px,
-              transparent 14px,
-              rgba(200,190,175,0.08) 16px,
-              transparent 18px,
-              transparent 28px)`,
-          }} />
-          {/* Fabric drape shadow */}
-          <div className="absolute inset-0" style={{
-            background: `linear-gradient(180deg,
-              rgba(180,170,150,0.1) 0%,
-              transparent 5%,
-              transparent 15%,
-              rgba(180,170,150,0.05) 40%,
-              transparent 60%,
-              rgba(180,170,150,0.08) 85%,
-              rgba(180,170,150,0.15) 100%)`,
-          }} />
-          {/* Gathered top (curtain rod bunching) */}
-          <div className="absolute top-0 left-0 right-0 h-[3%]" style={{
-            background: `repeating-linear-gradient(90deg,
-              rgba(220,210,195,0.3) 0px,
-              rgba(255,248,240,0.4) 4px,
-              rgba(220,210,195,0.3) 8px)`,
-            borderBottom: '1px solid rgba(200,190,175,0.15)',
-          }} />
-        </div>
-
-        {/* Right curtain — mirrored */}
-        <div className="absolute top-0 -right-4 h-full z-25 pointer-events-none" style={{
-          width: '14%',
-          minWidth: '60px',
-          maxWidth: '140px',
-          clipPath: 'url(#archClip)',
-          animation: 'curtainSwayRight 6s 1.5s ease-in-out infinite',
-          transformOrigin: 'top right',
-        }}>
-          <div className="absolute inset-0" style={{
-            background: `linear-gradient(270deg,
-              rgba(255,248,240,0.55) 0%,
-              rgba(255,248,240,0.35) 15%,
-              rgba(255,248,240,0.45) 30%,
-              rgba(255,248,240,0.25) 50%,
-              rgba(255,248,240,0.15) 70%,
-              rgba(255,248,240,0.05) 85%,
-              transparent 100%)`,
-          }} />
-          <div className="absolute inset-0" style={{
-            background: `repeating-linear-gradient(270deg,
-              transparent 0px,
-              rgba(200,190,175,0.12) 2px,
-              transparent 4px,
-              transparent 14px,
-              rgba(200,190,175,0.08) 16px,
-              transparent 18px,
-              transparent 28px)`,
-          }} />
-          <div className="absolute inset-0" style={{
-            background: `linear-gradient(180deg,
-              rgba(180,170,150,0.1) 0%,
-              transparent 5%,
-              transparent 15%,
-              rgba(180,170,150,0.05) 40%,
-              transparent 60%,
-              rgba(180,170,150,0.08) 85%,
-              rgba(180,170,150,0.15) 100%)`,
-          }} />
-          <div className="absolute top-0 left-0 right-0 h-[3%]" style={{
-            background: `repeating-linear-gradient(270deg,
-              rgba(220,210,195,0.3) 0px,
-              rgba(255,248,240,0.4) 4px,
-              rgba(220,210,195,0.3) 8px)`,
-            borderBottom: '1px solid rgba(200,190,175,0.15)',
-          }} />
-        </div>
-
-        {/* Interior light at night */}
-        {isNight && (
-          <div className="absolute -bottom-3 left-[30%] right-[30%] h-10 z-25 pointer-events-none" style={{
-            background: 'radial-gradient(ellipse at bottom, rgba(255,200,100,0.25) 0%, transparent 100%)',
-          }} />
-        )}
       </div>
-
-      <style>{`
-        @keyframes curtainSwayLeft {
-          0%, 100% { transform: skewX(0deg) translateX(0); }
-          20% { transform: skewX(0.6deg) translateX(3px); }
-          40% { transform: skewX(0.2deg) translateX(1px); }
-          60% { transform: skewX(0.8deg) translateX(4px); }
-          80% { transform: skewX(0.3deg) translateX(2px); }
-        }
-        @keyframes curtainSwayRight {
-          0%, 100% { transform: skewX(0deg) translateX(0); }
-          20% { transform: skewX(-0.6deg) translateX(-3px); }
-          40% { transform: skewX(-0.2deg) translateX(-1px); }
-          60% { transform: skewX(-0.8deg) translateX(-4px); }
-          80% { transform: skewX(-0.3deg) translateX(-2px); }
-        }
-      `}</style>
     </div>
   )
 }
@@ -1566,18 +1445,41 @@ function FrostedTransition({ active }) {
   )
 }
 
-// --- Main App ---
+// --- Back button for scene view ---
 
-export default function App() {
-  const [selectedCity, setSelectedCity] = useState(null)
+function BackButton({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="fixed top-6 left-6 z-50 flex items-center gap-2 font-sans text-sm font-medium px-4 py-2.5 rounded-full transition-all duration-200"
+      style={{
+        background: 'rgba(0,0,0,0.35)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.15)',
+        color: 'rgba(255,255,255,0.9)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+      }}
+      onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.5)'}
+      onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.35)'}
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+      Globe
+    </button>
+  )
+}
+
+// --- Scene view (the window looking out) ---
+
+function SceneView({ cityData, onBack }) {
   const [location, setLocation] = useState(null)
   const [weather, setWeather] = useState(null)
   const [sceneImage, setSceneImage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [imageLoading, setImageLoading] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
-  const [imageFailed, setImageFailed] = useState(false)
-  const abortRef = useRef(null)
 
   const detectLocation = useCallback(async () => {
     try {
@@ -1648,47 +1550,43 @@ export default function App() {
     }
   }, [])
 
-  const loadScene = useCallback(async (cityData) => {
-    setTransitioning(true)
-    setLoading(true)
-
-    await new Promise(r => setTimeout(r, 400))
-
-    let loc = cityData
-    if (!cityData || cityData.name === 'Auto') {
-      loc = await detectLocation()
-    } else {
-      loc = { city: cityData.name, lat: cityData.lat, lon: cityData.lon, tz: cityData.tz }
-    }
-
-    setLocation(loc)
-
-    const weatherData = await fetchWeather(loc.lat, loc.lon)
-    setWeather(weatherData)
-    setTransitioning(false)
-    setLoading(false)
-    setImageLoading(true)
-
-    const image = await generateScene(loc.city, weatherData, loc.tz)
-    if (image) {
-      setSceneImage(image)
-      setImageFailed(false)
-    } else {
-      setSceneImage(null)
-      setImageFailed(true)
-    }
-    setImageLoading(false)
-  }, [detectLocation, fetchWeather, generateScene])
-
   useEffect(() => {
-    loadScene(null)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    let cancelled = false
 
-  const handleCitySelect = (city) => {
-    setSelectedCity(city.name)
-    setSceneImage(null)
-    loadScene(city)
-  }
+    const load = async () => {
+      setTransitioning(true)
+      setLoading(true)
+
+      await new Promise(r => setTimeout(r, 300))
+
+      let loc
+      if (!cityData || cityData.name === 'Auto') {
+        loc = await detectLocation()
+      } else {
+        loc = { city: cityData.name, lat: cityData.lat, lon: cityData.lon, tz: cityData.tz }
+      }
+
+      if (cancelled) return
+      setLocation(loc)
+
+      const weatherData = await fetchWeather(loc.lat, loc.lon)
+      if (cancelled) return
+      setWeather(weatherData)
+      setTransitioning(false)
+      setLoading(false)
+      setImageLoading(true)
+
+      const image = await generateScene(loc.city, weatherData, loc.tz)
+      if (cancelled) return
+      if (image) {
+        setSceneImage(image)
+      }
+      setImageLoading(false)
+    }
+
+    load()
+    return () => { cancelled = true }
+  }, [cityData]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const weatherType = weather ? getWeatherType(weather.weatherCode) : 'sunny'
   const timeOfDay = location ? getTimeOfDay(getCityHour(location.tz)) : 'day'
@@ -1733,31 +1631,48 @@ export default function App() {
         <FrostedTransition active={transitioning} />
       </WindowFrame>
 
-      {/* City selector tabs */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 max-w-[95vw]">
-        <div className="flex flex-wrap justify-center gap-1 rounded-lg p-1" style={{
-          background: 'rgba(240,240,240,0.95)',
-          border: '1px solid #D4D4D4',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          backdropFilter: 'blur(8px)',
+      <BackButton onClick={onBack} />
+    </div>
+  )
+}
+
+// --- Main App ---
+
+export default function App() {
+  const [view, setView] = useState('globe') // 'globe' or 'scene'
+  const [selectedCity, setSelectedCity] = useState(null)
+
+  const handleCitySelect = useCallback((city) => {
+    setSelectedCity(city)
+    setView('scene')
+  }, [])
+
+  const handleBack = useCallback(() => {
+    setView('globe')
+    setSelectedCity(null)
+  }, [])
+
+  if (view === 'scene' && selectedCity) {
+    return <SceneView cityData={selectedCity} onBack={handleBack} />
+  }
+
+  return (
+    <div className="w-screen h-screen overflow-hidden select-none">
+      <Suspense fallback={
+        <div className="w-screen h-screen flex items-center justify-center" style={{
+          background: 'radial-gradient(ellipse at center, #0a1628 0%, #050a15 100%)',
         }}>
-          {CITIES.map((city) => {
-            const isActive = selectedCity === city.name || (!selectedCity && city.name === 'Auto')
-            return (
-              <button key={city.name} onClick={() => handleCitySelect(city)}
-                className="font-sans text-xs font-medium whitespace-nowrap transition-all duration-200 rounded-md"
-                style={{
-                  padding: '6px 12px',
-                  background: isActive ? '#1A6CDB' : 'transparent',
-                  color: isActive ? '#FFFFFF' : '#333333',
-                }}
-              >
-                {city.label}
-              </button>
-            )
-          })}
+          <div className="text-center">
+            <div className="w-8 h-8 mx-auto mb-4 rounded-full border-2 border-white/30 border-t-white/80" style={{
+              animation: 'spin 1s linear infinite',
+            }} />
+            <p className="font-serif text-xl text-white/60 tracking-wider">Loading globe...</p>
+          </div>
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
         </div>
-      </div>
+      }>
+        <GlobeView cities={CITIES} onSelectCity={handleCitySelect} />
+      </Suspense>
     </div>
   )
 }
