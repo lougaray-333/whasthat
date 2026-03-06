@@ -248,24 +248,100 @@ function StarsEffect({ timeOfDay }) {
 
 function FallbackSky({ weatherType, timeOfDay }) {
   const skyGradients = {
-    'sunny-day': 'linear-gradient(180deg, #4A90D9 0%, #87CEEB 50%, #B8E6F0 100%)',
-    'sunny-dawn': 'linear-gradient(180deg, #2C3E6B 0%, #E8857A 40%, #F5C26B 100%)',
-    'sunny-dusk': 'linear-gradient(180deg, #2C3E6B 0%, #C06050 40%, #F0A050 100%)',
-    'cloudy-day': 'linear-gradient(180deg, #8899AA 0%, #AABBCC 50%, #C5D0D8 100%)',
-    'rain-day': 'linear-gradient(180deg, #4A5568 0%, #718096 50%, #A0AEC0 100%)',
-    'snow-day': 'linear-gradient(180deg, #CBD5E0 0%, #E2E8F0 50%, #F7FAFC 100%)',
-    'storm-day': 'linear-gradient(180deg, #1A202C 0%, #2D3748 50%, #4A5568 100%)',
-    'fog-day': 'linear-gradient(180deg, #CBD5E0 0%, #E2E8F0 50%, #EDF2F7 100%)',
-    'night': 'linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%)',
-    'evening': 'linear-gradient(180deg, #1E3A5F 0%, #2D4A7A 50%, #4A6FA5 100%)',
+    'sunny-day': 'linear-gradient(180deg, #2E6CB5 0%, #4A90D9 25%, #87CEEB 55%, #B8E6F0 80%, #E8F4E8 100%)',
+    'sunny-dawn': 'linear-gradient(180deg, #1A1A3E 0%, #4A2C6B 15%, #C06070 35%, #E8857A 50%, #F5C26B 70%, #FFE8A0 100%)',
+    'sunny-dusk': 'linear-gradient(180deg, #1A1A3E 0%, #3A2060 15%, #8B3A50 35%, #C06050 50%, #F0A050 70%, #FFD080 100%)',
+    'cloudy-day': 'linear-gradient(180deg, #6B7D8E 0%, #8899AA 25%, #AABBCC 55%, #C5D0D8 80%, #D8DFE5 100%)',
+    'rain-day': 'linear-gradient(180deg, #2D3748 0%, #4A5568 25%, #718096 55%, #A0AEC0 80%, #B8C5D0 100%)',
+    'snow-day': 'linear-gradient(180deg, #A0B0C0 0%, #CBD5E0 25%, #E2E8F0 55%, #F0F4F8 80%, #F7FAFC 100%)',
+    'storm-day': 'linear-gradient(180deg, #0F1520 0%, #1A202C 25%, #2D3748 55%, #4A5568 80%, #5A6678 100%)',
+    'fog-day': 'linear-gradient(180deg, #A8B8C8 0%, #CBD5E0 25%, #E2E8F0 55%, #EDF2F7 80%, #F5F8FA 100%)',
+    'night': 'linear-gradient(180deg, #050A15 0%, #0F172A 20%, #1E293B 50%, #263548 75%, #334155 100%)',
+    'evening': 'linear-gradient(180deg, #0A1628 0%, #1E3A5F 25%, #2D4A7A 50%, #3D5A8A 75%, #4A6FA5 100%)',
   }
   const key = (timeOfDay === 'night' || timeOfDay === 'evening')
     ? timeOfDay
     : `${weatherType}-${timeOfDay === 'dawn' || timeOfDay === 'dusk' ? timeOfDay : 'day'}`
+
   return (
-    <div className="absolute inset-0" style={{
-      background: skyGradients[key] || skyGradients['sunny-day'],
-    }} />
+    <div className="absolute inset-0">
+      {/* Sky gradient */}
+      <div className="absolute inset-0" style={{
+        background: skyGradients[key] || skyGradients['sunny-day'],
+      }} />
+
+      {/* Distant city silhouette at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-[35%] pointer-events-none" style={{
+        background: timeOfDay === 'night' || timeOfDay === 'evening'
+          ? 'linear-gradient(to top, rgba(15,20,30,0.95) 0%, rgba(15,20,30,0.7) 30%, rgba(15,20,30,0.3) 60%, transparent 100%)'
+          : weatherType === 'rain' || weatherType === 'storm'
+            ? 'linear-gradient(to top, rgba(40,50,60,0.8) 0%, rgba(40,50,60,0.5) 30%, rgba(40,50,60,0.15) 60%, transparent 100%)'
+            : 'linear-gradient(to top, rgba(60,70,80,0.6) 0%, rgba(80,90,100,0.3) 30%, rgba(100,110,120,0.08) 60%, transparent 100%)',
+      }} />
+
+      {/* Building silhouettes */}
+      <svg className="absolute bottom-0 left-0 right-0 pointer-events-none" viewBox="0 0 1200 300" preserveAspectRatio="none" style={{ height: '30%', width: '100%' }}>
+        <defs>
+          <linearGradient id="bldgGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={timeOfDay === 'night' || timeOfDay === 'evening' ? '#0a1020' : '#3a4555'} />
+            <stop offset="100%" stopColor={timeOfDay === 'night' || timeOfDay === 'evening' ? '#060810' : '#2a3040'} />
+          </linearGradient>
+        </defs>
+        {/* Far buildings */}
+        <rect x="50" y="120" width="60" height="180" fill="url(#bldgGrad)" opacity="0.5" />
+        <rect x="130" y="80" width="45" height="220" fill="url(#bldgGrad)" opacity="0.5" />
+        <rect x="200" y="140" width="70" height="160" fill="url(#bldgGrad)" opacity="0.45" />
+        <rect x="300" y="60" width="50" height="240" fill="url(#bldgGrad)" opacity="0.55" />
+        <rect x="370" y="100" width="80" height="200" fill="url(#bldgGrad)" opacity="0.5" />
+        <rect x="480" y="130" width="55" height="170" fill="url(#bldgGrad)" opacity="0.45" />
+        <rect x="560" y="70" width="40" height="230" fill="url(#bldgGrad)" opacity="0.55" />
+        <rect x="620" y="110" width="75" height="190" fill="url(#bldgGrad)" opacity="0.5" />
+        <rect x="720" y="90" width="60" height="210" fill="url(#bldgGrad)" opacity="0.5" />
+        <rect x="810" y="150" width="50" height="150" fill="url(#bldgGrad)" opacity="0.45" />
+        <rect x="880" y="75" width="55" height="225" fill="url(#bldgGrad)" opacity="0.55" />
+        <rect x="960" y="120" width="70" height="180" fill="url(#bldgGrad)" opacity="0.5" />
+        <rect x="1050" y="95" width="45" height="205" fill="url(#bldgGrad)" opacity="0.5" />
+        <rect x="1110" y="140" width="65" height="160" fill="url(#bldgGrad)" opacity="0.45" />
+        {/* Near buildings - slightly darker and larger */}
+        <rect x="20" y="180" width="90" height="120" fill="url(#bldgGrad)" opacity="0.7" />
+        <rect x="150" y="200" width="100" height="100" fill="url(#bldgGrad)" opacity="0.65" />
+        <rect x="350" y="190" width="85" height="110" fill="url(#bldgGrad)" opacity="0.7" />
+        <rect x="500" y="210" width="110" height="90" fill="url(#bldgGrad)" opacity="0.65" />
+        <rect x="680" y="195" width="80" height="105" fill="url(#bldgGrad)" opacity="0.7" />
+        <rect x="850" y="205" width="95" height="95" fill="url(#bldgGrad)" opacity="0.65" />
+        <rect x="1020" y="185" width="75" height="115" fill="url(#bldgGrad)" opacity="0.7" />
+        {/* Window lights at night */}
+        {(timeOfDay === 'night' || timeOfDay === 'evening') && (
+          <>
+            <rect x="160" y="210" width="4" height="4" fill="#FFE4A0" opacity="0.7" />
+            <rect x="175" y="220" width="4" height="4" fill="#FFD080" opacity="0.6" />
+            <rect x="190" y="215" width="4" height="4" fill="#FFE4A0" opacity="0.5" />
+            <rect x="370" y="200" width="4" height="4" fill="#FFD080" opacity="0.7" />
+            <rect x="385" y="210" width="4" height="4" fill="#FFE4A0" opacity="0.6" />
+            <rect x="400" y="195" width="4" height="4" fill="#FFD080" opacity="0.5" />
+            <rect x="520" y="225" width="4" height="4" fill="#FFE4A0" opacity="0.6" />
+            <rect x="545" y="220" width="4" height="4" fill="#FFD080" opacity="0.7" />
+            <rect x="700" y="205" width="4" height="4" fill="#FFE4A0" opacity="0.5" />
+            <rect x="715" y="215" width="4" height="4" fill="#FFD080" opacity="0.6" />
+            <rect x="870" y="215" width="4" height="4" fill="#FFE4A0" opacity="0.7" />
+            <rect x="890" y="225" width="4" height="4" fill="#FFD080" opacity="0.5" />
+            <rect x="320" y="80" width="3" height="5" fill="#FFE4A0" opacity="0.6" />
+            <rect x="325" y="100" width="3" height="5" fill="#FFD080" opacity="0.5" />
+            <rect x="570" y="85" width="3" height="5" fill="#FFE4A0" opacity="0.5" />
+            <rect x="575" y="105" width="3" height="5" fill="#FFD080" opacity="0.6" />
+            <rect x="895" y="90" width="3" height="5" fill="#FFE4A0" opacity="0.5" />
+            <rect x="900" y="110" width="3" height="5" fill="#FFD080" opacity="0.6" />
+            <rect x="140" y="95" width="3" height="5" fill="#FFE4A0" opacity="0.4" />
+            <rect x="735" y="100" width="3" height="5" fill="#FFD080" opacity="0.5" />
+          </>
+        )}
+      </svg>
+
+      {/* Subtle depth haze */}
+      <div className="absolute bottom-0 left-0 right-0 h-[15%] pointer-events-none" style={{
+        background: 'linear-gradient(to top, rgba(180,190,200,0.2) 0%, transparent 100%)',
+      }} />
+    </div>
   )
 }
 
@@ -274,25 +350,27 @@ function FallbackSky({ weatherType, timeOfDay }) {
 function InfoCard({ city, temperature, weatherDesc, timezone }) {
   const tempF = temperature != null ? Math.round(temperature * 9 / 5 + 32) : null
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 px-6 py-3 text-center"
+    <div className="absolute top-6 left-6 z-30 px-5 py-3"
       style={{
-        background: 'rgba(0,0,0,0.25)',
+        background: 'rgba(0,0,0,0.35)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.15)',
-        borderRadius: '24px',
+        border: '1px solid rgba(255,255,255,0.12)',
+        borderRadius: '16px',
       }}>
-      <h3 className="font-serif text-2xl font-light text-white drop-shadow-md tracking-wide">{city}</h3>
-      <div className="flex items-center justify-center gap-3 mt-1">
+      <h3 className="font-serif text-xl font-light text-white drop-shadow-md tracking-wide">{city}</h3>
+      <div className="flex items-center gap-2 mt-1">
         {temperature != null && (
-          <span className="text-sm text-white/90 drop-shadow-sm font-sans font-light">
+          <span className="text-xs text-white/90 drop-shadow-sm font-sans font-light">
             {Math.round(temperature)}°C / {tempF}°F
           </span>
         )}
-        <span className="text-white/40">|</span>
-        {weatherDesc && <span className="text-sm text-white/80 drop-shadow-sm font-sans font-light capitalize">{weatherDesc}</span>}
-        <span className="text-white/40">|</span>
-        <span className="text-sm text-white/70 font-sans font-light">{getCityTime(timezone)}</span>
+      </div>
+      <div className="flex items-center gap-2 mt-0.5">
+        {weatherDesc && <span className="text-xs text-white/75 drop-shadow-sm font-sans font-light capitalize">{weatherDesc}</span>}
+      </div>
+      <div className="mt-0.5">
+        <span className="text-xs text-white/60 font-sans font-light">{getCityTime(timezone)}</span>
       </div>
     </div>
   )
@@ -428,19 +506,34 @@ function WindowFrame({ children, timeOfDay }) {
 function LoadingView() {
   return (
     <div className="absolute inset-0 flex items-center justify-center z-10" style={{
-      background: 'linear-gradient(135deg, #CBD5E0 0%, #E2E8F0 30%, #EDF2F7 60%, #CBD5E0 100%)',
-      backgroundSize: '200% 200%',
-      animation: 'loadingShift 3s ease-in-out infinite',
+      background: 'linear-gradient(180deg, #4A6FA5 0%, #87AECC 40%, #C5D5E0 70%, #D8DFE5 100%)',
     }}>
       <div className="text-center">
-        <p className="font-serif text-2xl text-gray-500/80 animate-pulse tracking-wider">Looking outside...</p>
+        <div className="w-8 h-8 mx-auto mb-4 rounded-full border-2 border-white/30 border-t-white/80" style={{
+          animation: 'spin 1s linear infinite',
+        }} />
+        <p className="font-serif text-xl text-white/80 tracking-wider drop-shadow-md">Looking outside...</p>
       </div>
       <style>{`
-        @keyframes loadingShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       `}</style>
+    </div>
+  )
+}
+
+function ImageLoadingIndicator() {
+  return (
+    <div className="absolute top-6 right-6 z-30 px-4 py-2 rounded-full" style={{
+      background: 'rgba(0,0,0,0.3)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+    }}>
+      <div className="flex items-center gap-2">
+        <div className="w-3 h-3 rounded-full border border-white/40 border-t-white/90" style={{
+          animation: 'spin 1s linear infinite',
+        }} />
+        <span className="text-xs text-white/70 font-sans">Generating scene...</span>
+      </div>
     </div>
   )
 }
@@ -466,6 +559,7 @@ export default function App() {
   const [weather, setWeather] = useState(null)
   const [sceneImage, setSceneImage] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [imageLoading, setImageLoading] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
   const abortRef = useRef(null)
@@ -558,6 +652,8 @@ export default function App() {
     const weatherData = await fetchWeather(loc.lat, loc.lon)
     setWeather(weatherData)
     setTransitioning(false)
+    setLoading(false)
+    setImageLoading(true)
 
     const image = await generateScene(loc.city, weatherData, loc.tz)
     if (image) {
@@ -567,7 +663,7 @@ export default function App() {
       setSceneImage(null)
       setImageFailed(true)
     }
-    setLoading(false)
+    setImageLoading(false)
   }, [detectLocation, fetchWeather, generateScene])
 
   useEffect(() => {
@@ -585,7 +681,7 @@ export default function App() {
   return (
     <div className="w-screen h-screen overflow-hidden select-none">
       <WindowFrame timeOfDay={timeOfDay}>
-        {loading && !sceneImage && !imageFailed ? (
+        {loading && !weather ? (
           <LoadingView />
         ) : (
           <>
@@ -600,6 +696,8 @@ export default function App() {
 
             <WeatherEffects weatherType={weatherType} timeOfDay={timeOfDay} />
             <StarsEffect timeOfDay={timeOfDay} />
+
+            {imageLoading && <ImageLoadingIndicator />}
 
             {location && weather && (
               <InfoCard
