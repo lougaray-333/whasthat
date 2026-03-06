@@ -259,7 +259,8 @@ function FallbackSky({ weatherType, timeOfDay }) {
     'night': 'linear-gradient(180deg, #050A15 0%, #0F172A 20%, #1E293B 50%, #263548 75%, #334155 100%)',
     'evening': 'linear-gradient(180deg, #0A1628 0%, #1E3A5F 25%, #2D4A7A 50%, #3D5A8A 75%, #4A6FA5 100%)',
   }
-  const key = (timeOfDay === 'night' || timeOfDay === 'evening')
+  const isNight = timeOfDay === 'night' || timeOfDay === 'evening'
+  const key = isNight
     ? timeOfDay
     : `${weatherType}-${timeOfDay === 'dawn' || timeOfDay === 'dusk' ? timeOfDay : 'day'}`
 
@@ -270,70 +271,62 @@ function FallbackSky({ weatherType, timeOfDay }) {
         background: skyGradients[key] || skyGradients['sunny-day'],
       }} />
 
-      {/* Distant city silhouette at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-[35%] pointer-events-none" style={{
-        background: timeOfDay === 'night' || timeOfDay === 'evening'
-          ? 'linear-gradient(to top, rgba(15,20,30,0.95) 0%, rgba(15,20,30,0.7) 30%, rgba(15,20,30,0.3) 60%, transparent 100%)'
+      {/* Atmospheric haze at horizon */}
+      <div className="absolute bottom-0 left-0 right-0 h-[40%] pointer-events-none" style={{
+        background: isNight
+          ? 'linear-gradient(to top, rgba(10,15,25,0.6) 0%, rgba(15,20,35,0.3) 40%, transparent 100%)'
           : weatherType === 'rain' || weatherType === 'storm'
-            ? 'linear-gradient(to top, rgba(40,50,60,0.8) 0%, rgba(40,50,60,0.5) 30%, rgba(40,50,60,0.15) 60%, transparent 100%)'
-            : 'linear-gradient(to top, rgba(60,70,80,0.6) 0%, rgba(80,90,100,0.3) 30%, rgba(100,110,120,0.08) 60%, transparent 100%)',
+            ? 'linear-gradient(to top, rgba(50,60,70,0.4) 0%, rgba(60,70,80,0.2) 40%, transparent 100%)'
+            : 'linear-gradient(to top, rgba(80,90,105,0.25) 0%, rgba(100,110,125,0.1) 40%, transparent 100%)',
       }} />
 
-      {/* Building silhouettes */}
-      <svg className="absolute bottom-0 left-0 right-0 pointer-events-none" viewBox="0 0 1200 300" preserveAspectRatio="none" style={{ height: '30%', width: '100%' }}>
+      {/* Building silhouettes — organic layered skyline */}
+      <svg className="absolute bottom-0 left-0 right-0 pointer-events-none" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" style={{ height: '45%', width: '100%' }}>
         <defs>
-          <linearGradient id="bldgGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={timeOfDay === 'night' || timeOfDay === 'evening' ? '#0a1020' : '#3a4555'} />
-            <stop offset="100%" stopColor={timeOfDay === 'night' || timeOfDay === 'evening' ? '#060810' : '#2a3040'} />
+          <linearGradient id="farBldg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={isNight ? '#1a2035' : '#6a7585'} stopOpacity="0.6" />
+            <stop offset="100%" stopColor={isNight ? '#0d1520' : '#556070'} stopOpacity="0.7" />
+          </linearGradient>
+          <linearGradient id="midBldg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={isNight ? '#101828' : '#4a5565'} stopOpacity="0.7" />
+            <stop offset="100%" stopColor={isNight ? '#080e18' : '#3a4555'} stopOpacity="0.8" />
+          </linearGradient>
+          <linearGradient id="nearBldg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={isNight ? '#0a1020' : '#354050'} stopOpacity="0.85" />
+            <stop offset="100%" stopColor={isNight ? '#050810' : '#252e3a'} stopOpacity="0.9" />
           </linearGradient>
         </defs>
-        {/* Far buildings */}
-        <rect x="50" y="120" width="60" height="180" fill="url(#bldgGrad)" opacity="0.5" />
-        <rect x="130" y="80" width="45" height="220" fill="url(#bldgGrad)" opacity="0.5" />
-        <rect x="200" y="140" width="70" height="160" fill="url(#bldgGrad)" opacity="0.45" />
-        <rect x="300" y="60" width="50" height="240" fill="url(#bldgGrad)" opacity="0.55" />
-        <rect x="370" y="100" width="80" height="200" fill="url(#bldgGrad)" opacity="0.5" />
-        <rect x="480" y="130" width="55" height="170" fill="url(#bldgGrad)" opacity="0.45" />
-        <rect x="560" y="70" width="40" height="230" fill="url(#bldgGrad)" opacity="0.55" />
-        <rect x="620" y="110" width="75" height="190" fill="url(#bldgGrad)" opacity="0.5" />
-        <rect x="720" y="90" width="60" height="210" fill="url(#bldgGrad)" opacity="0.5" />
-        <rect x="810" y="150" width="50" height="150" fill="url(#bldgGrad)" opacity="0.45" />
-        <rect x="880" y="75" width="55" height="225" fill="url(#bldgGrad)" opacity="0.55" />
-        <rect x="960" y="120" width="70" height="180" fill="url(#bldgGrad)" opacity="0.5" />
-        <rect x="1050" y="95" width="45" height="205" fill="url(#bldgGrad)" opacity="0.5" />
-        <rect x="1110" y="140" width="65" height="160" fill="url(#bldgGrad)" opacity="0.45" />
-        {/* Near buildings - slightly darker and larger */}
-        <rect x="20" y="180" width="90" height="120" fill="url(#bldgGrad)" opacity="0.7" />
-        <rect x="150" y="200" width="100" height="100" fill="url(#bldgGrad)" opacity="0.65" />
-        <rect x="350" y="190" width="85" height="110" fill="url(#bldgGrad)" opacity="0.7" />
-        <rect x="500" y="210" width="110" height="90" fill="url(#bldgGrad)" opacity="0.65" />
-        <rect x="680" y="195" width="80" height="105" fill="url(#bldgGrad)" opacity="0.7" />
-        <rect x="850" y="205" width="95" height="95" fill="url(#bldgGrad)" opacity="0.65" />
-        <rect x="1020" y="185" width="75" height="115" fill="url(#bldgGrad)" opacity="0.7" />
+        {/* Far layer — hazy distant skyline */}
+        <path d="M0,280 L0,220 L40,220 L40,180 L55,180 L55,175 L70,175 L70,190 L100,190 L100,160 L110,158 L120,160 L120,140 L130,138 L140,140 L140,185 L170,185 L170,195 L200,195 L200,170 L215,168 L230,170 L230,150 L240,148 L250,150 L250,200 L280,200 L280,175 L310,175 L310,130 L318,125 L325,130 L325,165 L340,165 L340,185 L380,185 L380,155 L395,153 L410,155 L410,195 L440,195 L440,210 L470,210 L470,165 L480,160 L490,165 L490,185 L520,185 L520,145 L530,140 L540,145 L540,175 L570,175 L570,190 L600,190 L600,155 L615,150 L630,155 L630,180 L660,180 L660,200 L700,200 L700,170 L720,168 L740,170 L740,135 L748,130 L755,135 L755,180 L790,180 L790,195 L820,195 L820,160 L835,155 L850,160 L850,190 L880,190 L880,175 L910,175 L910,145 L920,140 L930,145 L930,185 L960,185 L960,200 L1000,200 L1000,170 L1015,168 L1030,170 L1030,195 L1060,195 L1060,180 L1090,180 L1090,155 L1100,150 L1110,155 L1110,190 L1140,190 L1140,210 L1170,210 L1170,195 L1200,195 L1200,280 Z" fill="url(#farBldg)" />
+        {/* Mid layer */}
+        <path d="M0,280 L0,240 L30,240 L30,225 L60,225 L60,200 L75,198 L90,200 L90,230 L120,230 L120,210 L145,210 L145,190 L155,185 L165,190 L165,220 L200,220 L200,235 L240,235 L240,205 L255,200 L270,205 L270,175 L278,170 L285,175 L285,215 L320,215 L320,230 L360,230 L360,210 L380,208 L400,210 L400,185 L408,180 L415,185 L415,225 L450,225 L450,240 L490,240 L490,215 L510,212 L530,215 L530,195 L538,190 L545,195 L545,230 L580,230 L580,245 L620,245 L620,220 L640,218 L660,220 L660,200 L670,195 L680,200 L680,235 L720,235 L720,210 L745,210 L745,185 L753,180 L760,185 L760,225 L800,225 L800,240 L840,240 L840,215 L860,212 L880,215 L880,230 L920,230 L920,205 L935,200 L950,205 L950,190 L958,185 L965,190 L965,225 L1000,225 L1000,240 L1040,240 L1040,215 L1060,212 L1080,215 L1080,235 L1120,235 L1120,220 L1150,220 L1150,200 L1160,195 L1170,200 L1170,235 L1200,235 L1200,280 Z" fill="url(#midBldg)" />
+        {/* Near layer — closest buildings */}
+        <path d="M0,280 L0,255 L50,255 L50,245 L80,245 L80,230 L95,228 L110,230 L110,250 L160,250 L160,240 L190,240 L190,225 L205,222 L220,225 L220,250 L270,250 L270,255 L320,255 L320,235 L340,232 L360,235 L360,250 L420,250 L420,240 L450,240 L450,228 L462,225 L475,228 L475,248 L530,248 L530,255 L580,255 L580,242 L600,240 L620,242 L620,255 L680,255 L680,245 L710,245 L710,232 L725,228 L740,232 L740,252 L800,252 L800,255 L850,255 L850,238 L870,235 L890,238 L890,252 L940,252 L940,245 L970,245 L970,230 L982,226 L995,230 L995,248 L1050,248 L1050,255 L1100,255 L1100,242 L1120,240 L1140,242 L1140,255 L1200,255 L1200,280 Z" fill="url(#nearBldg)" />
         {/* Window lights at night */}
-        {(timeOfDay === 'night' || timeOfDay === 'evening') && (
-          <>
-            <rect x="160" y="210" width="4" height="4" fill="#FFE4A0" opacity="0.7" />
-            <rect x="175" y="220" width="4" height="4" fill="#FFD080" opacity="0.6" />
-            <rect x="190" y="215" width="4" height="4" fill="#FFE4A0" opacity="0.5" />
-            <rect x="370" y="200" width="4" height="4" fill="#FFD080" opacity="0.7" />
-            <rect x="385" y="210" width="4" height="4" fill="#FFE4A0" opacity="0.6" />
-            <rect x="400" y="195" width="4" height="4" fill="#FFD080" opacity="0.5" />
-            <rect x="520" y="225" width="4" height="4" fill="#FFE4A0" opacity="0.6" />
-            <rect x="545" y="220" width="4" height="4" fill="#FFD080" opacity="0.7" />
-            <rect x="700" y="205" width="4" height="4" fill="#FFE4A0" opacity="0.5" />
-            <rect x="715" y="215" width="4" height="4" fill="#FFD080" opacity="0.6" />
-            <rect x="870" y="215" width="4" height="4" fill="#FFE4A0" opacity="0.7" />
-            <rect x="890" y="225" width="4" height="4" fill="#FFD080" opacity="0.5" />
-            <rect x="320" y="80" width="3" height="5" fill="#FFE4A0" opacity="0.6" />
-            <rect x="325" y="100" width="3" height="5" fill="#FFD080" opacity="0.5" />
-            <rect x="570" y="85" width="3" height="5" fill="#FFE4A0" opacity="0.5" />
-            <rect x="575" y="105" width="3" height="5" fill="#FFD080" opacity="0.6" />
-            <rect x="895" y="90" width="3" height="5" fill="#FFE4A0" opacity="0.5" />
-            <rect x="900" y="110" width="3" height="5" fill="#FFD080" opacity="0.6" />
-            <rect x="140" y="95" width="3" height="5" fill="#FFE4A0" opacity="0.4" />
-            <rect x="735" y="100" width="3" height="5" fill="#FFD080" opacity="0.5" />
-          </>
+        {isNight && (
+          <g opacity="0.8">
+            <rect x="135" y="195" width="3" height="4" fill="#FFE4A0" rx="0.5" />
+            <rect x="155" y="188" width="3" height="4" fill="#FFD580" rx="0.5" />
+            <rect x="282" y="178" width="3" height="4" fill="#FFE4A0" rx="0.5" />
+            <rect x="318" y="133" width="2" height="3" fill="#FFD580" rx="0.5" />
+            <rect x="408" y="183" width="3" height="4" fill="#FFE4A0" rx="0.5" />
+            <rect x="485" y="168" width="2" height="3" fill="#FFD580" rx="0.5" />
+            <rect x="535" y="148" width="2" height="3" fill="#FFE4A0" rx="0.5" />
+            <rect x="615" y="158" width="3" height="4" fill="#FFD580" rx="0.5" />
+            <rect x="748" y="138" width="2" height="3" fill="#FFE4A0" rx="0.5" />
+            <rect x="835" y="158" width="3" height="4" fill="#FFD580" rx="0.5" />
+            <rect x="920" y="148" width="2" height="3" fill="#FFE4A0" rx="0.5" />
+            <rect x="960" y="188" width="3" height="4" fill="#FFD580" rx="0.5" />
+            <rect x="1100" y="158" width="2" height="3" fill="#FFE4A0" rx="0.5" />
+            <rect x="1160" y="198" width="3" height="4" fill="#FFD580" rx="0.5" />
+            <rect x="255" y="208" width="3" height="4" fill="#FFE4A0" rx="0.5" />
+            <rect x="530" y="198" width="3" height="4" fill="#FFD580" rx="0.5" />
+            <rect x="670" y="203" width="3" height="4" fill="#FFE4A0" rx="0.5" />
+            <rect x="890" y="218" width="3" height="4" fill="#FFD580" rx="0.5" />
+            <rect x="462" y="228" width="3" height="4" fill="#FFE4A0" rx="0.5" />
+            <rect x="725" y="233" width="3" height="4" fill="#FFD580" rx="0.5" />
+            <rect x="982" y="232" width="3" height="4" fill="#FFE4A0" rx="0.5" />
+          </g>
         )}
       </svg>
 
@@ -350,28 +343,28 @@ function FallbackSky({ weatherType, timeOfDay }) {
 function InfoCard({ city, temperature, weatherDesc, timezone }) {
   const tempF = temperature != null ? Math.round(temperature * 9 / 5 + 32) : null
   return (
-    <div className="absolute top-6 left-6 z-30 px-5 py-3"
+    <div className="absolute z-30"
       style={{
+        top: 'max(24px, 12%)',
+        left: 'max(24px, 8%)',
+        padding: '14px 20px',
         background: 'rgba(0,0,0,0.35)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         border: '1px solid rgba(255,255,255,0.12)',
-        borderRadius: '16px',
+        borderRadius: '14px',
+        minWidth: '140px',
       }}>
-      <h3 className="font-serif text-xl font-light text-white drop-shadow-md tracking-wide">{city}</h3>
-      <div className="flex items-center gap-2 mt-1">
-        {temperature != null && (
-          <span className="text-xs text-white/90 drop-shadow-sm font-sans font-light">
-            {Math.round(temperature)}°C / {tempF}°F
-          </span>
-        )}
-      </div>
-      <div className="flex items-center gap-2 mt-0.5">
-        {weatherDesc && <span className="text-xs text-white/75 drop-shadow-sm font-sans font-light capitalize">{weatherDesc}</span>}
-      </div>
-      <div className="mt-0.5">
-        <span className="text-xs text-white/60 font-sans font-light">{getCityTime(timezone)}</span>
-      </div>
+      <h3 className="font-serif text-lg font-light text-white drop-shadow-md tracking-wide leading-tight">{city}</h3>
+      {temperature != null && (
+        <p className="text-xs text-white/90 drop-shadow-sm font-sans font-light mt-1.5">
+          {Math.round(temperature)}°C / {tempF}°F
+        </p>
+      )}
+      {weatherDesc && (
+        <p className="text-xs text-white/70 drop-shadow-sm font-sans font-light mt-0.5 capitalize">{weatherDesc}</p>
+      )}
+      <p className="text-xs text-white/55 font-sans font-light mt-0.5">{getCityTime(timezone)}</p>
     </div>
   )
 }
@@ -713,23 +706,24 @@ export default function App() {
         <FrostedTransition active={transitioning} />
       </WindowFrame>
 
-      {/* City selector — floating pills */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex gap-1.5 px-4 py-2.5 rounded-full" style={{
-          background: 'rgba(0,0,0,0.4)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.1)',
+      {/* City selector — segmented tabs */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 max-w-[95vw]">
+        <div className="inline-flex rounded-lg overflow-hidden" style={{
+          background: '#F0F0F0',
+          border: '1px solid #D4D4D4',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}>
-          {CITIES.map(city => {
+          {CITIES.map((city, i) => {
             const isActive = selectedCity === city.name || (!selectedCity && city.name === 'Auto')
             return (
               <button key={city.name} onClick={() => handleCitySelect(city)}
-                className={`px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-300 whitespace-nowrap
-                  ${isActive
-                    ? 'bg-white/90 text-gray-900 shadow-lg'
-                    : 'text-white/70 hover:bg-white/15 hover:text-white'
-                  }`}
+                className="relative font-sans text-xs font-medium whitespace-nowrap transition-all duration-200"
+                style={{
+                  padding: '8px 14px',
+                  background: isActive ? '#1A6CDB' : 'transparent',
+                  color: isActive ? '#FFFFFF' : '#333333',
+                  borderRight: i < CITIES.length - 1 ? '1px solid #D4D4D4' : 'none',
+                }}
               >
                 {city.label}
               </button>
