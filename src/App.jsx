@@ -328,8 +328,8 @@ function StarsEffect({ timeOfDay }) {
 
 // --- City-specific Ambient Animations ---
 
-// Cartoon-style 2D walking person with optional umbrella, hair, accessories
-function WalkingPerson({ id, goingRight, yPosition, duration, delay, scale, color, hasUmbrella, shirtColor, hairColor }) {
+// Side-profile walking person with optional umbrella
+function WalkingPerson({ id, goingRight, yPosition, duration, delay, scale, color, hasUmbrella, shirtColor, hairColor, interacting }) {
   const shirt = shirtColor || color
   const hair = hairColor || '#2C2C2C'
   const skin = '#F5CBA7'
@@ -337,50 +337,58 @@ function WalkingPerson({ id, goingRight, yPosition, duration, delay, scale, colo
   return (
     <div className="absolute" style={{
       top: `${yPosition}%`,
-      left: goingRight ? '-6%' : '106%',
-      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      left: interacting ? undefined : (goingRight ? '-6%' : '106%'),
+      animation: interacting ? 'none' : `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
       transform: `scale(${scale})`,
-      opacity: 0,
+      opacity: interacting ? 0.85 : 0,
     }}>
-      <svg width="36" height="64" viewBox="0 0 36 64" style={{
+      <svg width="28" height="64" viewBox="0 0 28 64" style={{
         transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
         filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.5))',
       }}>
         {/* Umbrella */}
         {hasUmbrella && (
           <g>
-            <line x1="18" y1="-18" x2="18" y2="8" stroke="#555" strokeWidth="1.5" />
-            <path d="M4,-18 Q18,-30 32,-18 Q25,-16 18,-18 Q11,-16 4,-18 Z" fill="#3498DB" stroke="#2980B9" strokeWidth="0.5" />
+            <line x1="14" y1="-18" x2="14" y2="8" stroke="#555" strokeWidth="1.5" />
+            <path d="M0,-18 Q14,-30 28,-18 Q21,-16 14,-18 Q7,-16 0,-18 Z" fill="#3498DB" stroke="#2980B9" strokeWidth="0.5" />
           </g>
         )}
-        {/* Hair */}
-        <ellipse cx="18" cy="5" rx="7" ry="7.5" fill={hair} />
-        {/* Head */}
-        <circle cx="18" cy="7" r="6" fill={skin} />
-        {/* Eyes */}
-        <circle cx="15.5" cy="6" r="1" fill="#333" />
-        <circle cx="20.5" cy="6" r="1" fill="#333" />
-        {/* Smile */}
-        <path d="M15.5,9.5 Q18,12 20.5,9.5" fill="none" stroke="#333" strokeWidth="0.7" />
-        {/* Torso / shirt */}
-        <rect x="11" y="13" width="14" height="18" rx="4" fill={shirt} />
-        {/* Collar */}
-        <path d="M14,13 L18,16 L22,13" fill="none" stroke={shirt === '#ECF0F1' ? '#CCC' : 'rgba(0,0,0,0.15)'} strokeWidth="1" />
-        {/* Arms swinging */}
-        <g style={{ transformOrigin: '11px 15px', animation: `armSwing ${legSpeed}s ease-in-out infinite alternate` }}>
-          <rect x="5" y="14" width="6" height="15" rx="3" fill={skin} />
+        {/* Hair (side profile - more oval, offset back) */}
+        <ellipse cx="13" cy="4" rx="8" ry="7" fill={hair} />
+        {/* Head (side profile oval) */}
+        <ellipse cx="14" cy="7" rx="7" ry="6.5" fill={skin} />
+        {/* Nose bump */}
+        <path d="M21,6 L23,8 L21,9" fill={skin} stroke="rgba(0,0,0,0.1)" strokeWidth="0.5" />
+        {/* Eye (single, side view) */}
+        <circle cx="18" cy="6" r="1.1" fill="#333" />
+        <circle cx="18.3" cy="5.7" r="0.3" fill="#FFF" />
+        {/* Mouth */}
+        <path d="M19,10 Q21,11 20,10" fill="none" stroke="#333" strokeWidth="0.6" />
+        {/* Ear */}
+        <ellipse cx="8" cy="7.5" rx="1.5" ry="2" fill={skin} stroke="rgba(0,0,0,0.08)" strokeWidth="0.5" />
+        {/* Torso (narrower side view) */}
+        <path d="M8,13 L20,13 Q22,13 22,15 L22,30 Q22,32 20,32 L8,32 Q6,32 6,30 L6,15 Q6,13 8,13 Z" fill={shirt} />
+        {/* Collar detail */}
+        <path d="M18,13 Q20,15 22,14" fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" />
+        {/* Back arm (behind body, darker) */}
+        <g style={{ transformOrigin: '10px 15px', animation: `armSwing ${legSpeed}s ease-in-out infinite alternate-reverse` }}>
+          <rect x="5" y="14" width="5" height="14" rx="2.5" fill="rgba(0,0,0,0.15)" />
+          <ellipse cx="7.5" cy="28" rx="2.5" ry="2" fill="rgba(0,0,0,0.1)" />
         </g>
-        <g style={{ transformOrigin: '25px 15px', animation: `armSwing ${legSpeed}s ease-in-out infinite alternate-reverse` }}>
-          <rect x="25" y="14" width="6" height="15" rx="3" fill={skin} />
+        {/* Front arm */}
+        <g style={{ transformOrigin: '18px 15px', animation: `armSwing ${legSpeed}s ease-in-out infinite alternate` }}>
+          <rect x="17" y="14" width="5" height="14" rx="2.5" fill={skin} />
+          <ellipse cx="19.5" cy="28" rx="2.5" ry="2" fill={skin} />
         </g>
-        {/* Legs walking */}
-        <g style={{ transformOrigin: '14px 31px', animation: `legSwing ${legSpeed}s ease-in-out infinite alternate` }}>
-          <rect x="11" y="31" width="6" height="20" rx="3" fill="#34495E" />
-          <rect x="10" y="49" width="8" height="4" rx="2" fill="#555" />
+        {/* Back leg (darker) */}
+        <g style={{ transformOrigin: '10px 32px', animation: `legSwing ${legSpeed}s ease-in-out infinite alternate-reverse` }}>
+          <rect x="7" y="32" width="6" height="20" rx="3" fill="rgba(40,50,70,0.9)" />
+          <rect x="6" y="50" width="8" height="4" rx="2" fill="#444" />
         </g>
-        <g style={{ transformOrigin: '22px 31px', animation: `legSwing ${legSpeed}s ease-in-out infinite alternate-reverse` }}>
-          <rect x="19" y="31" width="6" height="20" rx="3" fill="#34495E" />
-          <rect x="18" y="49" width="8" height="4" rx="2" fill="#555" />
+        {/* Front leg */}
+        <g style={{ transformOrigin: '18px 32px', animation: `legSwing ${legSpeed}s ease-in-out infinite alternate` }}>
+          <rect x="15" y="32" width="6" height="20" rx="3" fill="#34495E" />
+          <rect x="14" y="50" width="8" height="4" rx="2" fill="#555" />
         </g>
       </svg>
     </div>
@@ -419,26 +427,39 @@ function TaxiCab({ goingRight, yPosition, duration, delay, scale }) {
   return <AnimatedCar id="taxi" goingRight={goingRight} yPosition={yPosition} duration={duration} delay={delay} carColor="#F1C40F" scale={scale} />
 }
 
-// Neon sign cluster — spawns 5-8 signs at once
+// Neon sign cluster — grid layout to prevent overlap
 function NeonCluster({ baseX, baseY }) {
   const neonColors = ['#FF1493', '#00FFFF', '#FF4500', '#ADFF2F', '#FF69B4', '#7B68EE', '#FFD700', '#FF6347']
   const labels = ['BAR', 'OPEN', 'EAT', 'LIVE', '24H', 'CLUB', 'JAZZ', 'RAMEN', 'SUSHI', 'BEER', 'CAFE', 'HOTEL', 'KARAOKE']
-  const count = 5 + Math.floor(Math.random() * 4)
-  const signs = Array.from({ length: count }, (_, i) => ({
-    id: i,
-    x: baseX + (Math.random() - 0.5) * 40,
-    y: baseY + (Math.random() - 0.5) * 25,
-    color: neonColors[Math.floor(Math.random() * neonColors.length)],
-    label: labels[Math.floor(Math.random() * labels.length)],
-    delay: Math.random() * 3,
-    size: 0.7 + Math.random() * 0.6,
-  }))
+  // Use deterministic grid positions based on baseX/baseY to prevent overlap
+  const cols = 3
+  const rows = 2
+  const count = cols * rows
+  const cellW = 16 // percentage width per cell
+  const cellH = 12 // percentage height per cell
+  const startX = Math.max(2, Math.min(70, baseX - (cols * cellW) / 2))
+  const startY = Math.max(5, Math.min(45, baseY - (rows * cellH) / 2))
+  const signs = Array.from({ length: count }, (_, i) => {
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    // Seed random from baseX + index for deterministic per-cluster variety
+    const seed = (baseX * 100 + baseY * 10 + i * 7) % 1000
+    return {
+      id: i,
+      x: startX + col * cellW + (seed % 5),
+      y: startY + row * cellH + ((seed * 3) % 4),
+      color: neonColors[(seed * 2) % neonColors.length],
+      label: labels[(seed * 3) % labels.length],
+      delay: (i * 0.5) + ((seed % 10) / 10),
+      size: 0.7 + ((seed % 6) / 10),
+    }
+  })
   return (
     <>
       {signs.map(s => (
         <div key={s.id} className="absolute" style={{
-          left: `${Math.max(2, Math.min(90, s.x))}%`,
-          top: `${Math.max(5, Math.min(55, s.y))}%`,
+          left: `${s.x}%`,
+          top: `${s.y}%`,
           transform: `scale(${s.size})`,
         }}>
           <div style={{
@@ -836,8 +857,9 @@ function StreetPerformer({ x }) {
   )
 }
 
-// Jogger
+// Side-profile jogger with leaning posture
 function Jogger({ goingRight, yPosition, duration, delay, scale }) {
+  const skin = '#F5CBA7'
   return (
     <div className="absolute" style={{
       top: `${yPosition}%`,
@@ -846,27 +868,150 @@ function Jogger({ goingRight, yPosition, duration, delay, scale }) {
       transform: `scale(${scale})`,
       opacity: 0,
     }}>
-      <svg width="36" height="56" viewBox="0 0 36 56" style={{
+      <svg width="32" height="56" viewBox="0 0 32 56" style={{
         transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
         filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
       }}>
-        <circle cx="18" cy="7" r="6" fill="#F5CBA7" />
-        <rect x="12" y="13" width="12" height="14" rx="3" fill="#E74C3C" />
-        <g style={{ transformOrigin: '14px 27px', animation: `legSwing 0.25s ease-in-out infinite alternate` }}>
-          <rect x="11" y="27" width="6" height="18" rx="2" fill="#2C3E50" />
-          <rect x="10" y="43" width="8" height="4" rx="2" fill="#FFF" />
+        {/* Head (side profile, tilted forward) */}
+        <ellipse cx="16" cy="7" rx="6" ry="6" fill={skin} />
+        <circle cx="20" cy="6" r="1" fill="#333" />
+        <path d="M22,5 L24,7 L22,8" fill={skin} stroke="rgba(0,0,0,0.1)" strokeWidth="0.4" />
+        {/* Ponytail/hair */}
+        <ellipse cx="12" cy="4" rx="5" ry="5" fill="#2C2C2C" />
+        {/* Tank top (slight lean) */}
+        <path d="M9,13 L21,13 Q23,13 22,15 L20,28 Q20,30 18,30 L10,30 Q8,30 8,28 L7,15 Q7,13 9,13 Z" fill="#E74C3C" />
+        {/* Back arm */}
+        <g style={{ transformOrigin: '10px 15px', animation: `armSwing 0.25s ease-in-out infinite alternate-reverse` }}>
+          <rect x="5" y="14" width="5" height="12" rx="2.5" fill="rgba(0,0,0,0.12)" />
         </g>
-        <g style={{ transformOrigin: '22px 27px', animation: `legSwing 0.25s ease-in-out infinite alternate-reverse` }}>
-          <rect x="19" y="27" width="6" height="18" rx="2" fill="#2C3E50" />
-          <rect x="18" y="43" width="8" height="4" rx="2" fill="#FFF" />
+        {/* Front arm (bent at elbow, running pose) */}
+        <g style={{ transformOrigin: '19px 15px', animation: `armSwing 0.25s ease-in-out infinite alternate` }}>
+          <rect x="18" y="14" width="5" height="12" rx="2.5" fill={skin} />
         </g>
-        <g style={{ transformOrigin: '10px 15px', animation: `armSwing 0.25s ease-in-out infinite alternate` }}>
-          <rect x="5" y="14" width="6" height="12" rx="3" fill="#F5CBA7" />
+        {/* Back leg */}
+        <g style={{ transformOrigin: '11px 30px', animation: `legSwing 0.25s ease-in-out infinite alternate-reverse` }}>
+          <rect x="8" y="30" width="6" height="16" rx="2" fill="rgba(30,40,55,0.9)" />
+          <rect x="7" y="44" width="8" height="4" rx="2" fill="#DDD" />
         </g>
-        <g style={{ transformOrigin: '26px 15px', animation: `armSwing 0.25s ease-in-out infinite alternate-reverse` }}>
-          <rect x="25" y="14" width="6" height="12" rx="3" fill="#F5CBA7" />
+        {/* Front leg */}
+        <g style={{ transformOrigin: '18px 30px', animation: `legSwing 0.25s ease-in-out infinite alternate` }}>
+          <rect x="15" y="30" width="6" height="16" rx="2" fill="#2C3E50" />
+          <rect x="14" y="44" width="8" height="4" rx="2" fill="#FFF" />
         </g>
       </svg>
+    </div>
+  )
+}
+
+// People interaction scene — two people stopped, facing each other
+function PeopleInteraction({ x, yPosition, type, scale }) {
+  const interactions = {
+    talking: {
+      bubbles: ['Hi!', 'Hey!', 'Nice day', 'Wow', 'LOL', 'Really?', 'No way!', 'Haha', 'Cool!', 'OMG'],
+      duration: 6,
+    },
+    bumping: {
+      bubbles: ['Oops!', 'Sorry!', 'Watch it!', 'My bad', 'Excuse me', 'Whoa!', 'Hey!'],
+      duration: 4,
+    },
+    yelling: {
+      bubbles: ['HEY!!', 'TAXI!', 'WAIT!', 'MOVE!', 'HELP!', 'YO!', 'STOP!'],
+      duration: 3,
+    },
+  }
+  const config = interactions[type] || interactions.talking
+  const bubble1 = config.bubbles[Math.floor(x * 7) % config.bubbles.length]
+  const bubble2 = config.bubbles[Math.floor(x * 3 + 1) % config.bubbles.length]
+  const shirt1 = ['#2C3E50', '#E74C3C', '#3498DB', '#27AE60', '#8E44AD'][Math.floor(x * 2) % 5]
+  const shirt2 = ['#F39C12', '#1ABC9C', '#ECF0F1', '#D35400', '#2980B9'][Math.floor(x * 3) % 5]
+  const hair1 = ['#2C2C2C', '#4A3728', '#8B4513'][Math.floor(x) % 3]
+  const hair2 = ['#DEB887', '#C0392B', '#1A1A2E'][Math.floor(x * 5) % 3]
+  const skin = '#F5CBA7'
+
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`,
+      top: `${yPosition}%`,
+      transform: `scale(${scale || 0.8})`,
+      animation: `interactionFadeIn 0.8s ease-out forwards, interactionFadeOut 0.8s ${config.duration - 0.8}s ease-in forwards`,
+      opacity: 0,
+    }}>
+      {/* Person 1 facing right */}
+      <svg width="28" height="64" viewBox="0 0 28 64" style={{
+        position: 'absolute', left: 0, top: 0,
+        filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.5))',
+      }}>
+        <ellipse cx="13" cy="4" rx="8" ry="7" fill={hair1} />
+        <ellipse cx="14" cy="7" rx="7" ry="6.5" fill={skin} />
+        <path d="M21,6 L23,8 L21,9" fill={skin} stroke="rgba(0,0,0,0.1)" strokeWidth="0.5" />
+        <circle cx="18" cy="6" r="1.1" fill="#333" />
+        <ellipse cx="8" cy="7.5" rx="1.5" ry="2" fill={skin} />
+        <path d="M8,13 L20,13 Q22,13 22,15 L22,30 Q22,32 20,32 L8,32 Q6,32 6,30 L6,15 Q6,13 8,13 Z" fill={shirt1} />
+        <rect x="7" y="32" width="6" height="20" rx="3" fill="#34495E" />
+        <rect x="15" y="32" width="6" height="20" rx="3" fill="#34495E" />
+        <rect x="6" y="50" width="8" height="4" rx="2" fill="#555" />
+        <rect x="14" y="50" width="8" height="4" rx="2" fill="#555" />
+        {type === 'bumping' && (
+          <g style={{ animation: 'bumpRecoil 0.5s ease-out 0.3s both' }}>
+            <line x1="24" y1="8" x2="30" y2="4" stroke="#FFD700" strokeWidth="2" />
+            <line x1="25" y1="12" x2="31" y2="12" stroke="#FFD700" strokeWidth="2" />
+          </g>
+        )}
+      </svg>
+
+      {/* Speech bubble for person 1 */}
+      <div style={{
+        position: 'absolute', left: '-8px', top: '-28px',
+        background: 'white', borderRadius: '10px', padding: '2px 6px',
+        fontSize: '9px', fontWeight: 'bold', color: '#333',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        animation: `speechBubblePop 0.4s 0.5s ease-out both`,
+        opacity: 0, whiteSpace: 'nowrap',
+      }}>
+        {bubble1}
+        <div style={{
+          position: 'absolute', bottom: '-4px', left: '10px',
+          width: 0, height: 0,
+          borderLeft: '4px solid transparent', borderRight: '4px solid transparent',
+          borderTop: '5px solid white',
+        }} />
+      </div>
+
+      {/* Person 2 facing left */}
+      <svg width="28" height="64" viewBox="0 0 28 64" style={{
+        position: 'absolute', left: '35px', top: 0,
+        transform: 'scaleX(-1)',
+        filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.5))',
+      }}>
+        <ellipse cx="13" cy="4" rx="8" ry="7" fill={hair2} />
+        <ellipse cx="14" cy="7" rx="7" ry="6.5" fill={skin} />
+        <path d="M21,6 L23,8 L21,9" fill={skin} stroke="rgba(0,0,0,0.1)" strokeWidth="0.5" />
+        <circle cx="18" cy="6" r="1.1" fill="#333" />
+        <ellipse cx="8" cy="7.5" rx="1.5" ry="2" fill={skin} />
+        <path d="M8,13 L20,13 Q22,13 22,15 L22,30 Q22,32 20,32 L8,32 Q6,32 6,30 L6,15 Q6,13 8,13 Z" fill={shirt2} />
+        <rect x="7" y="32" width="6" height="20" rx="3" fill="#34495E" />
+        <rect x="15" y="32" width="6" height="20" rx="3" fill="#34495E" />
+        <rect x="6" y="50" width="8" height="4" rx="2" fill="#555" />
+        <rect x="14" y="50" width="8" height="4" rx="2" fill="#555" />
+      </svg>
+
+      {/* Speech bubble for person 2 (delayed) */}
+      <div style={{
+        position: 'absolute', left: '38px', top: '-28px',
+        background: 'white', borderRadius: '10px', padding: '2px 6px',
+        fontSize: '9px', fontWeight: 'bold', color: '#333',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+        animation: `speechBubblePop 0.4s 1.2s ease-out both`,
+        opacity: 0, whiteSpace: 'nowrap',
+      }}>
+        {bubble2}
+        <div style={{
+          position: 'absolute', bottom: '-4px', right: '10px',
+          width: 0, height: 0,
+          borderLeft: '4px solid transparent', borderRight: '4px solid transparent',
+          borderTop: '5px solid white',
+        }} />
+      </div>
     </div>
   )
 }
@@ -974,26 +1119,54 @@ function CityAnimations({ cityName, timeOfDay, weatherType }) {
 
       setEntities(prev => {
         const filtered = prev.filter(e => Date.now() - e.spawnTime < 30000)
-        return [...filtered.slice(-15), entity]
+        return [...filtered.slice(-25), entity]
       })
     }
 
-    // Spawn first few quickly
+    // Spawn interaction scenes periodically
+    const spawnInteraction = () => {
+      const id = idRef.current++
+      const types = ['talking', 'bumping', 'yelling']
+      const type = types[Math.floor(Math.random() * types.length)]
+      setEntities(prev => {
+        const filtered = prev.filter(e => Date.now() - e.spawnTime < 30000)
+        return [...filtered.slice(-25), {
+          id, element: 'interaction', type,
+          x: 15 + Math.random() * 60,
+          yPosition: 76 + Math.random() * 14,
+          scale: 0.7 + Math.random() * 0.4,
+          spawnTime: Date.now(),
+        }]
+      })
+    }
+
+    // Spawn first few quickly — more entities
     const initialTimer = setTimeout(() => {
       spawn()
+      setTimeout(() => spawn(), 400)
       setTimeout(() => spawn(), 800)
+      setTimeout(() => spawn(), 1200)
       setTimeout(() => spawn(), 1600)
+      setTimeout(() => spawn(), 2000)
       setTimeout(() => spawn(), 2400)
     }, 500)
 
-    // Then regularly
+    // Then regularly — faster spawning
     const interval = setInterval(() => {
       spawn()
-    }, 2500 + Math.random() * 2500)
+      // 40% chance to double-spawn for density
+      if (Math.random() < 0.4) setTimeout(() => spawn(), 300)
+    }, 1500 + Math.random() * 1500)
+
+    // Interaction spawner — every 6-10 seconds
+    const interactionInterval = setInterval(() => {
+      spawnInteraction()
+    }, 6000 + Math.random() * 4000)
 
     return () => {
       clearTimeout(initialTimer)
       clearInterval(interval)
+      clearInterval(interactionInterval)
     }
   }, [cityName, isRainy]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1047,6 +1220,8 @@ function CityAnimations({ cityName, timeOfDay, weatherType }) {
             return <CoffeeCup key={entity.id} x={entity.x} delay={entity.delay} />
           case 'vending-machine':
             return <VendingMachine key={entity.id} x={entity.x} />
+          case 'interaction':
+            return <PeopleInteraction key={entity.id} x={entity.x} yPosition={entity.yPosition} type={entity.type} scale={entity.scale} />
           default:
             return null
         }
@@ -1141,6 +1316,24 @@ function CityAnimations({ cityName, timeOfDay, weatherType }) {
           50% { transform: translate(-20px, 0); }
           75% { transform: translate(-10px, -15px); }
           100% { transform: translate(0, 0); }
+        }
+        @keyframes interactionFadeIn {
+          0% { opacity: 0; transform: scale(0.8); }
+          100% { opacity: 0.85; transform: scale(1); }
+        }
+        @keyframes interactionFadeOut {
+          0% { opacity: 0.85; }
+          100% { opacity: 0; }
+        }
+        @keyframes speechBubblePop {
+          0% { opacity: 0; transform: scale(0.3) translateY(5px); }
+          60% { opacity: 1; transform: scale(1.1) translateY(-2px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes bumpRecoil {
+          0% { transform: translate(0, 0); opacity: 0; }
+          30% { transform: translate(-3px, -2px); opacity: 1; }
+          100% { transform: translate(0, 0); opacity: 0; }
         }
       `}</style>
     </div>
