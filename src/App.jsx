@@ -3,16 +3,70 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 const CITIES = [
   { name: 'Auto', label: 'My Location', lat: null, lon: null },
   { name: 'New York', label: 'NYC', lat: 40.7128, lon: -74.006, tz: 'America/New_York' },
+  { name: 'Atlanta', label: 'Atlanta', lat: 33.749, lon: -84.388, tz: 'America/New_York' },
   { name: 'Miami', label: 'Miami', lat: 25.7617, lon: -80.1918, tz: 'America/New_York' },
-  { name: 'Los Angeles', label: 'LA', lat: 34.0522, lon: -118.2437, tz: 'America/Los_Angeles' },
-  { name: 'Chicago', label: 'Chicago', lat: 41.8781, lon: -87.6298, tz: 'America/Chicago' },
-  { name: 'London', label: 'London', lat: 51.5074, lon: -0.1278, tz: 'Europe/London' },
-  { name: 'Paris', label: 'Paris', lat: 48.8566, lon: 2.3522, tz: 'Europe/Paris' },
-  { name: 'Tokyo', label: 'Tokyo', lat: 35.6762, lon: 139.6503, tz: 'Asia/Tokyo' },
-  { name: 'Dubai', label: 'Dubai', lat: 25.2048, lon: 55.2708, tz: 'Asia/Dubai' },
-  { name: 'Honolulu', label: 'Honolulu', lat: 21.3069, lon: -157.8583, tz: 'Pacific/Honolulu' },
+  { name: 'Austin', label: 'Austin', lat: 30.2672, lon: -97.7431, tz: 'America/Chicago' },
+  { name: 'San Francisco', label: 'SF', lat: 37.7749, lon: -122.4194, tz: 'America/Los_Angeles' },
   { name: 'Seattle', label: 'Seattle', lat: 47.6062, lon: -122.3321, tz: 'America/Los_Angeles' },
+  { name: 'London', label: 'London', lat: 51.5074, lon: -0.1278, tz: 'Europe/London' },
+  { name: 'Lisbon', label: 'Lisbon', lat: 38.7223, lon: -9.1393, tz: 'Europe/Lisbon' },
+  { name: 'Ho Chi Minh City', label: 'Vietnam', lat: 10.8231, lon: 106.6297, tz: 'Asia/Ho_Chi_Minh' },
+  { name: 'Barcelona', label: 'Spain', lat: 41.3874, lon: 2.1686, tz: 'Europe/Madrid' },
+  { name: 'Tokyo', label: 'Tokyo', lat: 35.6762, lon: 139.6503, tz: 'Asia/Tokyo' },
 ]
+
+// Unsplash photo IDs for each city — curated street-level "window view" shots
+const CITY_PHOTOS = {
+  'New York': [
+    'photo-1534430480872-3498386e7856', // NYC street
+    'photo-1496442226666-8d4d0e62e6e9', // NYC brownstones
+    'photo-1555109307-f7d9da25c244', // NYC residential
+  ],
+  'Atlanta': [
+    'photo-1575917649263-3151b03a6668', // Atlanta midtown
+    'photo-1588432415392-50e3a0e76e48', // Atlanta street
+  ],
+  'Miami': [
+    'photo-1535498730771-e735b998cd64', // Miami art deco
+    'photo-1514214246283-d427a95c5d2f', // Miami palms
+  ],
+  'Austin': [
+    'photo-1531218150217-54595bc2b934', // Austin street
+    'photo-1588993608743-ae498a57e99a', // Austin downtown
+  ],
+  'San Francisco': [
+    'photo-1521747116042-5a810fda9664', // SF houses
+    'photo-1501594907352-04cda38ebc29', // SF street
+  ],
+  'Seattle': [
+    'photo-1502175353174-a7a70e73b362', // Seattle
+    'photo-1516663713099-37eb20910dd8', // Seattle rain
+  ],
+  'London': [
+    'photo-1513635269975-59663e0ac1ad', // London street
+    'photo-1520986606214-8b456906c813', // London terraces
+  ],
+  'Lisbon': [
+    'photo-1555881400-74d7acaacd8b', // Lisbon street
+    'photo-1548707309-dcebeab9ea9b', // Lisbon tram
+  ],
+  'Ho Chi Minh City': [
+    'photo-1583417319070-4a69db38a482', // Vietnam street
+    'photo-1559592413-7cec4d0cae2b', // HCM city
+  ],
+  'Barcelona': [
+    'photo-1583422409516-2895a77efded', // Barcelona
+    'photo-1539037116277-4db20889f2d7', // Barcelona street
+  ],
+  'Tokyo': [
+    'photo-1540959733332-eab4deabeeaf', // Tokyo street
+    'photo-1503899036084-c55cdd92da26', // Tokyo night
+  ],
+}
+
+function getUnsplashUrl(photoId) {
+  return `https://images.unsplash.com/${photoId}?w=1920&h=1080&fit=crop&q=80`
+}
 
 const WMO_CODES = {
   0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
@@ -59,7 +113,7 @@ function getCityTime(tz) {
   } catch { return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }
 }
 
-// ─── Weather Animation Components ───
+// --- Weather Animation Components ---
 
 function RainEffect() {
   const drops = Array.from({ length: 100 }, (_, i) => ({
@@ -223,7 +277,7 @@ function WeatherEffects({ weatherType, timeOfDay }) {
   )
 }
 
-// ─── Stars for night ───
+// --- Stars for night ---
 
 function StarsEffect({ timeOfDay }) {
   if (timeOfDay !== 'night' && timeOfDay !== 'evening') return null
@@ -244,9 +298,112 @@ function StarsEffect({ timeOfDay }) {
   )
 }
 
-// ─── Fallback gradient sky ───
+// --- Animated Car ---
 
-function FallbackSky({ weatherType, timeOfDay }) {
+function CarEffect() {
+  const [cars, setCars] = useState([])
+  const carIdRef = useRef(0)
+
+  useEffect(() => {
+    const spawnCar = () => {
+      const id = carIdRef.current++
+      const goingRight = Math.random() > 0.5
+      const yPosition = 78 + Math.random() * 12 // bottom 22% of scene
+      const duration = 8 + Math.random() * 6 // 8-14 seconds to cross
+      const carColor = ['#2C3E50', '#E74C3C', '#3498DB', '#F39C12', '#1ABC9C', '#8E44AD', '#ECF0F1', '#2ECC71'][Math.floor(Math.random() * 8)]
+      const carSize = 0.6 + Math.random() * 0.4 // scale variation
+
+      setCars(prev => [...prev, { id, goingRight, yPosition, duration, carColor, carSize }])
+
+      // Remove car after animation completes
+      setTimeout(() => {
+        setCars(prev => prev.filter(c => c.id !== id))
+      }, duration * 1000 + 500)
+    }
+
+    // Spawn a car every 6-15 seconds
+    const scheduleNext = () => {
+      const delay = 6000 + Math.random() * 9000
+      return setTimeout(() => {
+        spawnCar()
+        timerRef.current = scheduleNext()
+      }, delay)
+    }
+
+    const timerRef = { current: null }
+
+    // First car after 3-6 seconds
+    timerRef.current = setTimeout(() => {
+      spawnCar()
+      timerRef.current = scheduleNext()
+    }, 3000 + Math.random() * 3000)
+
+    return () => clearTimeout(timerRef.current)
+  }, [])
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+      {cars.map(car => (
+        <div key={car.id} className="absolute" style={{
+          top: `${car.yPosition}%`,
+          left: car.goingRight ? '-8%' : '108%',
+          animation: `carDrive${car.goingRight ? 'Right' : 'Left'} ${car.duration}s linear forwards`,
+          transform: `scale(${car.carSize})`,
+        }}>
+          {/* Simple car silhouette */}
+          <svg width="60" height="24" viewBox="0 0 60 24" style={{
+            transform: car.goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+          }}>
+            {/* Car body */}
+            <path d="M5,16 L5,12 Q5,10 8,10 L15,10 L20,4 Q21,3 23,3 L38,3 Q40,3 41,4 L48,10 L55,10 Q58,10 58,12 L58,16 Q58,18 56,18 L48,18 L48,16 Q48,13 44,13 Q40,13 40,16 L40,18 L22,18 L22,16 Q22,13 18,13 Q14,13 14,16 L14,18 L7,18 Q5,18 5,16 Z" fill={car.carColor} />
+            {/* Windows */}
+            <path d="M22,5 L20,9 L30,9 L30,5 Z" fill="rgba(150,200,255,0.6)" />
+            <path d="M32,5 L32,9 L45,9 L40,5 Z" fill="rgba(150,200,255,0.6)" />
+            {/* Front wheel */}
+            <circle cx="18" cy="17" r="4" fill="#222" />
+            <circle cx="18" cy="17" r="2" fill="#555" />
+            {/* Rear wheel */}
+            <circle cx="44" cy="17" r="4" fill="#222" />
+            <circle cx="44" cy="17" r="2" fill="#555" />
+            {/* Headlight */}
+            <rect x="55" y="11" width="3" height="3" rx="1" fill="#FFE4A0" opacity="0.8" />
+            {/* Taillight */}
+            <rect x="3" y="12" width="2" height="2" rx="0.5" fill="#FF4444" opacity="0.8" />
+          </svg>
+        </div>
+      ))}
+      <style>{`
+        @keyframes carDriveRight {
+          0% { left: -8%; }
+          100% { left: 108%; }
+        }
+        @keyframes carDriveLeft {
+          0% { left: 108%; }
+          100% { left: -8%; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// --- Photo-based fallback scene (replaces SVG buildings) ---
+
+function PhotoFallback({ cityName, weatherType, timeOfDay }) {
+  const isNight = timeOfDay === 'night' || timeOfDay === 'evening'
+  const [photoLoaded, setPhotoLoaded] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState(null)
+
+  useEffect(() => {
+    const photos = CITY_PHOTOS[cityName]
+    if (photos && photos.length > 0) {
+      const randomPhoto = photos[Math.floor(Math.random() * photos.length)]
+      setPhotoUrl(getUnsplashUrl(randomPhoto))
+      setPhotoLoaded(false)
+    }
+  }, [cityName])
+
+  // Sky gradient as base (always rendered)
   const skyGradients = {
     'sunny-day': 'linear-gradient(180deg, #2E6CB5 0%, #4A90D9 25%, #87CEEB 55%, #B8E6F0 80%, #E8F4E8 100%)',
     'sunny-dawn': 'linear-gradient(180deg, #1A1A3E 0%, #4A2C6B 15%, #C06070 35%, #E8857A 50%, #F5C26B 70%, #FFE8A0 100%)',
@@ -259,86 +416,65 @@ function FallbackSky({ weatherType, timeOfDay }) {
     'night': 'linear-gradient(180deg, #050A15 0%, #0F172A 20%, #1E293B 50%, #263548 75%, #334155 100%)',
     'evening': 'linear-gradient(180deg, #0A1628 0%, #1E3A5F 25%, #2D4A7A 50%, #3D5A8A 75%, #4A6FA5 100%)',
   }
-  const isNight = timeOfDay === 'night' || timeOfDay === 'evening'
   const key = isNight
     ? timeOfDay
     : `${weatherType}-${timeOfDay === 'dawn' || timeOfDay === 'dusk' ? timeOfDay : 'day'}`
 
   return (
     <div className="absolute inset-0">
-      {/* Sky gradient */}
+      {/* Base gradient sky */}
       <div className="absolute inset-0" style={{
         background: skyGradients[key] || skyGradients['sunny-day'],
       }} />
 
-      {/* Atmospheric haze at horizon */}
-      <div className="absolute bottom-0 left-0 right-0 h-[40%] pointer-events-none" style={{
-        background: isNight
-          ? 'linear-gradient(to top, rgba(10,15,25,0.6) 0%, rgba(15,20,35,0.3) 40%, transparent 100%)'
-          : weatherType === 'rain' || weatherType === 'storm'
-            ? 'linear-gradient(to top, rgba(50,60,70,0.4) 0%, rgba(60,70,80,0.2) 40%, transparent 100%)'
-            : 'linear-gradient(to top, rgba(80,90,105,0.25) 0%, rgba(100,110,125,0.1) 40%, transparent 100%)',
-      }} />
+      {/* City photo background */}
+      {photoUrl && (
+        <img
+          src={photoUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+          style={{ opacity: photoLoaded ? 1 : 0 }}
+          onLoad={() => setPhotoLoaded(true)}
+          crossOrigin="anonymous"
+        />
+      )}
 
-      {/* Building silhouettes — organic layered skyline */}
-      <svg className="absolute bottom-0 left-0 right-0 pointer-events-none" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMax slice" style={{ height: '45%', width: '100%' }}>
-        <defs>
-          <linearGradient id="farBldg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={isNight ? '#1a2035' : '#6a7585'} stopOpacity="0.6" />
-            <stop offset="100%" stopColor={isNight ? '#0d1520' : '#556070'} stopOpacity="0.7" />
-          </linearGradient>
-          <linearGradient id="midBldg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={isNight ? '#101828' : '#4a5565'} stopOpacity="0.7" />
-            <stop offset="100%" stopColor={isNight ? '#080e18' : '#3a4555'} stopOpacity="0.8" />
-          </linearGradient>
-          <linearGradient id="nearBldg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={isNight ? '#0a1020' : '#354050'} stopOpacity="0.85" />
-            <stop offset="100%" stopColor={isNight ? '#050810' : '#252e3a'} stopOpacity="0.9" />
-          </linearGradient>
-        </defs>
-        {/* Far layer — hazy distant skyline */}
-        <path d="M0,280 L0,220 L40,220 L40,180 L55,180 L55,175 L70,175 L70,190 L100,190 L100,160 L110,158 L120,160 L120,140 L130,138 L140,140 L140,185 L170,185 L170,195 L200,195 L200,170 L215,168 L230,170 L230,150 L240,148 L250,150 L250,200 L280,200 L280,175 L310,175 L310,130 L318,125 L325,130 L325,165 L340,165 L340,185 L380,185 L380,155 L395,153 L410,155 L410,195 L440,195 L440,210 L470,210 L470,165 L480,160 L490,165 L490,185 L520,185 L520,145 L530,140 L540,145 L540,175 L570,175 L570,190 L600,190 L600,155 L615,150 L630,155 L630,180 L660,180 L660,200 L700,200 L700,170 L720,168 L740,170 L740,135 L748,130 L755,135 L755,180 L790,180 L790,195 L820,195 L820,160 L835,155 L850,160 L850,190 L880,190 L880,175 L910,175 L910,145 L920,140 L930,145 L930,185 L960,185 L960,200 L1000,200 L1000,170 L1015,168 L1030,170 L1030,195 L1060,195 L1060,180 L1090,180 L1090,155 L1100,150 L1110,155 L1110,190 L1140,190 L1140,210 L1170,210 L1170,195 L1200,195 L1200,280 Z" fill="url(#farBldg)" />
-        {/* Mid layer */}
-        <path d="M0,280 L0,240 L30,240 L30,225 L60,225 L60,200 L75,198 L90,200 L90,230 L120,230 L120,210 L145,210 L145,190 L155,185 L165,190 L165,220 L200,220 L200,235 L240,235 L240,205 L255,200 L270,205 L270,175 L278,170 L285,175 L285,215 L320,215 L320,230 L360,230 L360,210 L380,208 L400,210 L400,185 L408,180 L415,185 L415,225 L450,225 L450,240 L490,240 L490,215 L510,212 L530,215 L530,195 L538,190 L545,195 L545,230 L580,230 L580,245 L620,245 L620,220 L640,218 L660,220 L660,200 L670,195 L680,200 L680,235 L720,235 L720,210 L745,210 L745,185 L753,180 L760,185 L760,225 L800,225 L800,240 L840,240 L840,215 L860,212 L880,215 L880,230 L920,230 L920,205 L935,200 L950,205 L950,190 L958,185 L965,190 L965,225 L1000,225 L1000,240 L1040,240 L1040,215 L1060,212 L1080,215 L1080,235 L1120,235 L1120,220 L1150,220 L1150,200 L1160,195 L1170,200 L1170,235 L1200,235 L1200,280 Z" fill="url(#midBldg)" />
-        {/* Near layer — closest buildings */}
-        <path d="M0,280 L0,255 L50,255 L50,245 L80,245 L80,230 L95,228 L110,230 L110,250 L160,250 L160,240 L190,240 L190,225 L205,222 L220,225 L220,250 L270,250 L270,255 L320,255 L320,235 L340,232 L360,235 L360,250 L420,250 L420,240 L450,240 L450,228 L462,225 L475,228 L475,248 L530,248 L530,255 L580,255 L580,242 L600,240 L620,242 L620,255 L680,255 L680,245 L710,245 L710,232 L725,228 L740,232 L740,252 L800,252 L800,255 L850,255 L850,238 L870,235 L890,238 L890,252 L940,252 L940,245 L970,245 L970,230 L982,226 L995,230 L995,248 L1050,248 L1050,255 L1100,255 L1100,242 L1120,240 L1140,242 L1140,255 L1200,255 L1200,280 Z" fill="url(#nearBldg)" />
-        {/* Window lights at night */}
-        {isNight && (
-          <g opacity="0.8">
-            <rect x="135" y="195" width="3" height="4" fill="#FFE4A0" rx="0.5" />
-            <rect x="155" y="188" width="3" height="4" fill="#FFD580" rx="0.5" />
-            <rect x="282" y="178" width="3" height="4" fill="#FFE4A0" rx="0.5" />
-            <rect x="318" y="133" width="2" height="3" fill="#FFD580" rx="0.5" />
-            <rect x="408" y="183" width="3" height="4" fill="#FFE4A0" rx="0.5" />
-            <rect x="485" y="168" width="2" height="3" fill="#FFD580" rx="0.5" />
-            <rect x="535" y="148" width="2" height="3" fill="#FFE4A0" rx="0.5" />
-            <rect x="615" y="158" width="3" height="4" fill="#FFD580" rx="0.5" />
-            <rect x="748" y="138" width="2" height="3" fill="#FFE4A0" rx="0.5" />
-            <rect x="835" y="158" width="3" height="4" fill="#FFD580" rx="0.5" />
-            <rect x="920" y="148" width="2" height="3" fill="#FFE4A0" rx="0.5" />
-            <rect x="960" y="188" width="3" height="4" fill="#FFD580" rx="0.5" />
-            <rect x="1100" y="158" width="2" height="3" fill="#FFE4A0" rx="0.5" />
-            <rect x="1160" y="198" width="3" height="4" fill="#FFD580" rx="0.5" />
-            <rect x="255" y="208" width="3" height="4" fill="#FFE4A0" rx="0.5" />
-            <rect x="530" y="198" width="3" height="4" fill="#FFD580" rx="0.5" />
-            <rect x="670" y="203" width="3" height="4" fill="#FFE4A0" rx="0.5" />
-            <rect x="890" y="218" width="3" height="4" fill="#FFD580" rx="0.5" />
-            <rect x="462" y="228" width="3" height="4" fill="#FFE4A0" rx="0.5" />
-            <rect x="725" y="233" width="3" height="4" fill="#FFD580" rx="0.5" />
-            <rect x="982" y="232" width="3" height="4" fill="#FFE4A0" rx="0.5" />
-          </g>
-        )}
-      </svg>
+      {/* Time-of-day color grading overlay */}
+      {isNight && (
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(180deg, rgba(5,10,30,0.7) 0%, rgba(10,20,50,0.5) 50%, rgba(15,25,55,0.6) 100%)',
+          mixBlendMode: 'multiply',
+        }} />
+      )}
+      {timeOfDay === 'dawn' && (
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(180deg, rgba(60,20,80,0.3) 0%, rgba(200,100,80,0.2) 50%, rgba(255,180,100,0.15) 100%)',
+          mixBlendMode: 'overlay',
+        }} />
+      )}
+      {timeOfDay === 'dusk' && (
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(180deg, rgba(60,20,80,0.35) 0%, rgba(180,80,50,0.25) 50%, rgba(255,160,60,0.2) 100%)',
+          mixBlendMode: 'overlay',
+        }} />
+      )}
 
-      {/* Subtle depth haze */}
-      <div className="absolute bottom-0 left-0 right-0 h-[15%] pointer-events-none" style={{
-        background: 'linear-gradient(to top, rgba(180,190,200,0.2) 0%, transparent 100%)',
-      }} />
+      {/* Weather overlays on photo */}
+      {(weatherType === 'rain' || weatherType === 'storm') && (
+        <div className="absolute inset-0" style={{
+          background: 'rgba(30,40,50,0.3)',
+        }} />
+      )}
+      {weatherType === 'fog' && (
+        <div className="absolute inset-0" style={{
+          background: 'rgba(200,210,220,0.4)',
+        }} />
+      )}
     </div>
   )
 }
 
-// ─── Info Card ───
+// --- Info Card ---
 
 function InfoCard({ city, temperature, weatherDesc, timezone }) {
   const tempF = temperature != null ? Math.round(temperature * 9 / 5 + 32) : null
@@ -369,7 +505,7 @@ function InfoCard({ city, temperature, weatherDesc, timezone }) {
   )
 }
 
-// ─── Window Frame — organic arched design ───
+// --- Window Frame ---
 
 function WindowFrame({ children, timeOfDay }) {
   const isNight = timeOfDay === 'night' || timeOfDay === 'evening'
@@ -387,7 +523,7 @@ function WindowFrame({ children, timeOfDay }) {
         backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence baseFrequency=\'.8\' numOctaves=\'4\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'.5\'/%3E%3C/svg%3E")',
       }} />
 
-      {/* Room ambient light — warm glow at night */}
+      {/* Room ambient light */}
       {isNight && (
         <div className="absolute inset-0 pointer-events-none" style={{
           background: 'radial-gradient(ellipse at 50% 80%, rgba(255,180,80,0.08) 0%, transparent 60%)',
@@ -413,7 +549,6 @@ function WindowFrame({ children, timeOfDay }) {
           background: 'linear-gradient(180deg, #5C4318 0%, #7A5A2E 20%, #6B4C22 40%, #7A5A2E 60%, #5C4318 80%, #4A3612 100%)',
           boxShadow: '0 12px 48px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1)',
         }}>
-          {/* Wood grain lines */}
           <div className="absolute inset-0 opacity-[0.08]" style={{
             background: 'repeating-linear-gradient(180deg, transparent, transparent 8px, rgba(0,0,0,0.15) 8px, transparent 9px)',
           }} />
@@ -423,28 +558,26 @@ function WindowFrame({ children, timeOfDay }) {
         <div className="absolute inset-0 overflow-hidden" style={{ clipPath: 'url(#archClip)' }}>
           {children}
 
-          {/* Subtle glass reflection — curved highlight */}
+          {/* Subtle glass reflection */}
           <div className="absolute inset-0 pointer-events-none z-20" style={{
             background: 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, transparent 30%, transparent 70%, rgba(255,255,255,0.03) 100%)',
           }} />
-
-          {/* Water droplets on glass (rain/storm) */}
         </div>
 
-        {/* Thin center mullion — just a subtle vertical line */}
+        {/* Center mullion */}
         <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[6px] z-20 pointer-events-none" style={{
           clipPath: 'url(#archClip)',
           background: 'linear-gradient(90deg, #4A3612, #7A5A2E, #4A3612)',
           boxShadow: '0 0 6px rgba(0,0,0,0.3)',
         }} />
 
-        {/* Thin horizontal bar at 60% */}
+        {/* Horizontal bar at 60% */}
         <div className="absolute left-0 right-0 top-[60%] h-[6px] z-20 pointer-events-none" style={{
           background: 'linear-gradient(180deg, #4A3612, #7A5A2E, #4A3612)',
           boxShadow: '0 0 6px rgba(0,0,0,0.3)',
         }} />
 
-        {/* Deep window sill with perspective */}
+        {/* Window sill */}
         <div className="absolute -bottom-3 left-[-3%] right-[-3%] h-10 z-30" style={{
           background: 'linear-gradient(180deg, #7A5A2E 0%, #6B4C22 50%, #5C4318 100%)',
           borderRadius: '0 0 6px 6px',
@@ -453,7 +586,7 @@ function WindowFrame({ children, timeOfDay }) {
           <div className="absolute top-1 left-0 right-0 h-[1px] bg-white/5" />
         </div>
 
-        {/* Sheer curtain — left, barely there */}
+        {/* Sheer curtain left */}
         <div className="absolute top-0 -left-2 w-16 h-full z-25 pointer-events-none" style={{
           clipPath: 'url(#archClip)',
         }}>
@@ -464,7 +597,7 @@ function WindowFrame({ children, timeOfDay }) {
           }} />
         </div>
 
-        {/* Sheer curtain — right */}
+        {/* Sheer curtain right */}
         <div className="absolute top-0 -right-2 w-16 h-full z-25 pointer-events-none" style={{
           clipPath: 'url(#archClip)',
         }}>
@@ -475,7 +608,7 @@ function WindowFrame({ children, timeOfDay }) {
           }} />
         </div>
 
-        {/* Interior light spilling in at night */}
+        {/* Interior light at night */}
         {isNight && (
           <div className="absolute -bottom-3 left-[30%] right-[30%] h-10 z-25 pointer-events-none" style={{
             background: 'radial-gradient(ellipse at bottom, rgba(255,200,100,0.25) 0%, transparent 100%)',
@@ -494,7 +627,7 @@ function WindowFrame({ children, timeOfDay }) {
   )
 }
 
-// ─── Loading state ───
+// --- Loading state ---
 
 function LoadingView() {
   return (
@@ -531,7 +664,7 @@ function ImageLoadingIndicator() {
   )
 }
 
-// ─── Frosted transition ───
+// --- Frosted transition ---
 
 function FrostedTransition({ active }) {
   return (
@@ -544,7 +677,7 @@ function FrostedTransition({ active }) {
   )
 }
 
-// ─── Main App ───
+// --- Main App ---
 
 export default function App() {
   const [selectedCity, setSelectedCity] = useState(null)
@@ -601,7 +734,6 @@ export default function App() {
       if (!promptRes.ok) throw new Error('Prompt generation failed')
       const { prompt } = await promptRes.json()
 
-      // Generate image with retry for model loading
       let image = null
       for (let attempt = 0; attempt < 3; attempt++) {
         const imgRes = await fetch('/api/generate-image', {
@@ -665,6 +797,7 @@ export default function App() {
 
   const handleCitySelect = (city) => {
     setSelectedCity(city.name)
+    setSceneImage(null)
     loadScene(city)
   }
 
@@ -684,11 +817,16 @@ export default function App() {
                 <img src={sceneImage} alt="Scene" className="w-full h-full object-cover" />
               </div>
             ) : (
-              <FallbackSky weatherType={weatherType} timeOfDay={timeOfDay} />
+              <PhotoFallback
+                cityName={location?.city || 'New York'}
+                weatherType={weatherType}
+                timeOfDay={timeOfDay}
+              />
             )}
 
             <WeatherEffects weatherType={weatherType} timeOfDay={timeOfDay} />
             <StarsEffect timeOfDay={timeOfDay} />
+            <CarEffect />
 
             {imageLoading && <ImageLoadingIndicator />}
 
@@ -706,23 +844,23 @@ export default function App() {
         <FrostedTransition active={transitioning} />
       </WindowFrame>
 
-      {/* City selector — segmented tabs */}
+      {/* City selector tabs */}
       <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 max-w-[95vw]">
-        <div className="inline-flex rounded-lg overflow-hidden" style={{
-          background: '#F0F0F0',
+        <div className="flex flex-wrap justify-center gap-1 rounded-lg p-1" style={{
+          background: 'rgba(240,240,240,0.95)',
           border: '1px solid #D4D4D4',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          backdropFilter: 'blur(8px)',
         }}>
-          {CITIES.map((city, i) => {
+          {CITIES.map((city) => {
             const isActive = selectedCity === city.name || (!selectedCity && city.name === 'Auto')
             return (
               <button key={city.name} onClick={() => handleCitySelect(city)}
-                className="relative font-sans text-xs font-medium whitespace-nowrap transition-all duration-200"
+                className="font-sans text-xs font-medium whitespace-nowrap transition-all duration-200 rounded-md"
                 style={{
-                  padding: '8px 14px',
+                  padding: '6px 12px',
                   background: isActive ? '#1A6CDB' : 'transparent',
                   color: isActive ? '#FFFFFF' : '#333333',
-                  borderRight: i < CITIES.length - 1 ? '1px solid #D4D4D4' : 'none',
                 }}
               >
                 {city.label}

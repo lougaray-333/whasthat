@@ -9,16 +9,17 @@ app.use(express.json())
 const anthropic = new Anthropic()
 
 const CITY_VISUALS = {
-  'New York': 'dense skyline, brownstone apartments, yellow cabs, fire escapes, busy sidewalks, Central Park glimpses',
-  'Miami': 'pastel art deco buildings, palm trees, people in summer clothes, ocean hints, South Beach vibes',
-  'Los Angeles': 'wide boulevards, palm trees, Spanish-style architecture, mountains in distance, laid-back feel',
-  'Chicago': 'bold architecture, L-train elevated tracks, Lake Michigan in distance, windy feel',
-  'London': 'Victorian row houses, red double-decker buses, grey skies typical, lush green parks',
-  'Paris': 'Haussmann buildings, sidewalk cafes, iron balconies, Eiffel Tower possibly visible in distance',
-  'Tokyo': 'dense neon signage, mix of traditional temples and ultra-modern towers, vending machines, bustling crowds',
-  'Dubai': 'glass skyscrapers, desert haze, luxury cars, wide empty roads, Burj Khalifa silhouette',
-  'Honolulu': 'lush tropical greenery, turquoise ocean, volcanic mountains, bright colorful flowers',
-  'Seattle': 'evergreen trees, overcast skies, Pike Place Market feel, water and hills, Space Needle'
+  'New York': 'Astoria Queens residential street with brick row houses, iron railings, parked cars, utility poles, small front yards',
+  'Atlanta': 'tree-lined Midtown Atlanta street with red brick buildings, Southern Victorian houses, dogwood trees',
+  'Miami': 'pastel art deco buildings along Ocean Drive, swaying coconut palms, turquoise water, parked convertibles',
+  'Austin': 'South Congress Avenue with eclectic storefronts, food trucks, live oak trees, vintage signs',
+  'San Francisco': 'steep hill with colorful Victorian painted ladies, cable car tracks, distant bay view',
+  'Seattle': 'Capitol Hill residential street with craftsman bungalows, evergreen trees, coffee shop on corner',
+  'London': 'Victorian brick terraces with chimney pots, red phone box, plane trees, double-decker bus',
+  'Lisbon': 'narrow cobblestone street with colorful tiled facades, yellow tram 28, laundry hanging',
+  'Ho Chi Minh City': 'bustling narrow alley with motorbikes, French colonial windows, street food vendors',
+  'Barcelona': 'Eixample district with Gaudi facades, plane tree boulevard, outdoor cafes, ornate balconies',
+  'Tokyo': 'quiet residential side street in Shimokitazawa, small houses, vending machines, narrow road',
 }
 
 function getTimeOfDay(hour) {
