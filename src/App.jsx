@@ -62,27 +62,28 @@ function getCityTime(tz) {
 // ─── Weather Animation Components ───
 
 function RainEffect() {
-  const drops = Array.from({ length: 80 }, (_, i) => ({
+  const drops = Array.from({ length: 100 }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
     delay: Math.random() * 2,
-    duration: 0.5 + Math.random() * 0.5,
-    opacity: 0.3 + Math.random() * 0.5,
+    duration: 0.4 + Math.random() * 0.4,
+    opacity: 0.2 + Math.random() * 0.5,
+    width: Math.random() > 0.7 ? 2 : 1,
   }))
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
       {drops.map(d => (
-        <div key={d.id} className="absolute w-[1px]" style={{
-          left: `${d.left}%`, top: '-10%', height: '15%',
-          background: 'linear-gradient(transparent, rgba(174,194,224,0.6))',
+        <div key={d.id} className="absolute" style={{
+          left: `${d.left}%`, top: '-10%', height: '12%', width: d.width,
+          background: 'linear-gradient(transparent, rgba(174,194,224,0.5))',
           animation: `rainFall ${d.duration}s ${d.delay}s linear infinite`,
           opacity: d.opacity,
         }} />
       ))}
       <style>{`
         @keyframes rainFall {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(750%); }
+          0% { transform: translateY(0) translateX(-2px); }
+          100% { transform: translateY(900%) translateX(4px); }
         }
       `}</style>
     </div>
@@ -161,23 +162,18 @@ function StormEffect() {
   )
 }
 
-function SunnyEffect() {
+function SunnyEffect({ timeOfDay }) {
+  const isDusk = timeOfDay === 'dusk' || timeOfDay === 'dawn'
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-      <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full" style={{
-        background: 'radial-gradient(circle, rgba(255,255,200,0.3) 0%, transparent 70%)',
+      <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full" style={{
+        background: isDusk
+          ? 'radial-gradient(circle, rgba(255,180,80,0.35) 0%, rgba(255,120,50,0.1) 40%, transparent 70%)'
+          : 'radial-gradient(circle, rgba(255,255,200,0.25) 0%, transparent 70%)',
         animation: 'sunPulse 4s ease-in-out infinite',
       }} />
-      {[0, 1, 2].map(i => (
-        <div key={i} className="absolute w-[150%] h-16 opacity-5" style={{
-          top: `${10 + i * 30}%`, left: '-25%',
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-          animation: `cloudDrift ${30 + i * 10}s ${i * 5}s linear infinite`,
-        }} />
-      ))}
       <style>{`
-        @keyframes sunPulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
-        @keyframes cloudDrift { 0% { transform: translateX(-30%); } 100% { transform: translateX(30%); } }
+        @keyframes sunPulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
       `}</style>
     </div>
   )
@@ -221,121 +217,9 @@ function WeatherEffects({ weatherType, timeOfDay }) {
       {weatherType === 'snow' && <SnowEffect />}
       {weatherType === 'fog' && <FogEffect />}
       {weatherType === 'storm' && <StormEffect />}
-      {weatherType === 'sunny' && <SunnyEffect />}
+      {weatherType === 'sunny' && <SunnyEffect timeOfDay={timeOfDay} />}
       {weatherType === 'cloudy' && <CloudyEffect />}
     </>
-  )
-}
-
-// ─── City-specific animated overlays ───
-
-function CityOverlay({ city }) {
-  const overlayMap = {
-    'New York': <NYCOverlay />,
-    'London': <LondonOverlay />,
-    'Paris': <ParisOverlay />,
-    'Tokyo': <TokyoOverlay />,
-    'Miami': <MiamiOverlay />,
-  }
-  return overlayMap[city] || <BirdsOverlay />
-}
-
-function NYCOverlay() {
-  return (
-    <div className="absolute bottom-[12%] left-0 w-full h-8 overflow-hidden pointer-events-none z-10">
-      <svg className="absolute" style={{ animation: 'driveCab 12s linear infinite' }} width="60" height="24" viewBox="0 0 60 24">
-        <rect x="5" y="4" width="50" height="14" rx="3" fill="#F5C518" />
-        <rect x="12" y="6" width="10" height="8" rx="1" fill="#87CEEB" opacity="0.7" />
-        <rect x="28" y="6" width="10" height="8" rx="1" fill="#87CEEB" opacity="0.7" />
-        <circle cx="15" cy="20" r="3.5" fill="#333" /><circle cx="45" cy="20" r="3.5" fill="#333" />
-      </svg>
-      <style>{`@keyframes driveCab { 0% { left: -80px; } 100% { left: 110%; } }`}</style>
-    </div>
-  )
-}
-
-function LondonOverlay() {
-  return (
-    <div className="absolute bottom-[12%] left-0 w-full h-12 overflow-hidden pointer-events-none z-10">
-      <svg className="absolute" style={{ animation: 'driveBus 18s linear infinite' }} width="80" height="40" viewBox="0 0 80 40">
-        <rect x="2" y="2" width="76" height="30" rx="3" fill="#CC0000" />
-        <rect x="6" y="5" width="12" height="10" rx="1" fill="#87CEEB" opacity="0.7" />
-        <rect x="22" y="5" width="12" height="10" rx="1" fill="#87CEEB" opacity="0.7" />
-        <rect x="38" y="5" width="12" height="10" rx="1" fill="#87CEEB" opacity="0.7" />
-        <rect x="54" y="5" width="12" height="10" rx="1" fill="#87CEEB" opacity="0.7" />
-        <rect x="2" y="18" width="76" height="14" rx="2" fill="#AA0000" />
-        <circle cx="20" cy="36" r="4" fill="#333" /><circle cx="60" cy="36" r="4" fill="#333" />
-      </svg>
-      <style>{`@keyframes driveBus { 0% { left: 110%; } 100% { left: -100px; } }`}</style>
-    </div>
-  )
-}
-
-function ParisOverlay() {
-  return (
-    <div className="absolute bottom-[12%] left-0 w-full h-8 overflow-hidden pointer-events-none z-10">
-      <svg className="absolute" style={{ animation: 'cyclist 14s linear infinite' }} width="40" height="30" viewBox="0 0 40 30">
-        <circle cx="8" cy="24" r="5" fill="none" stroke="#555" strokeWidth="1.5" />
-        <circle cx="32" cy="24" r="5" fill="none" stroke="#555" strokeWidth="1.5" />
-        <line x1="8" y1="24" x2="20" y2="14" stroke="#555" strokeWidth="1.5" />
-        <line x1="32" y1="24" x2="20" y2="14" stroke="#555" strokeWidth="1.5" />
-        <line x1="20" y1="14" x2="20" y2="6" stroke="#555" strokeWidth="1.5" />
-        <circle cx="20" cy="4" r="3" fill="#555" />
-        <line x1="20" y1="8" x2="14" y2="18" stroke="#555" strokeWidth="1" />
-        <line x1="20" y1="8" x2="26" y2="12" stroke="#555" strokeWidth="1" />
-      </svg>
-      <style>{`@keyframes cyclist { 0% { left: -60px; } 100% { left: 110%; } }`}</style>
-    </div>
-  )
-}
-
-function TokyoOverlay() {
-  const [flicker, setFlicker] = useState(0.6)
-  useEffect(() => {
-    const iv = setInterval(() => setFlicker(0.3 + Math.random() * 0.5), 500)
-    return () => clearInterval(iv)
-  }, [])
-  return (
-    <div className="absolute inset-0 pointer-events-none z-10">
-      <div className="absolute top-[10%] right-[10%] w-32 h-16 rounded" style={{
-        background: `rgba(255, 0, 100, ${flicker * 0.08})`,
-        boxShadow: `0 0 40px rgba(255, 0, 100, ${flicker * 0.12})`,
-      }} />
-      <div className="absolute top-[20%] left-[15%] w-24 h-10 rounded" style={{
-        background: `rgba(0, 180, 255, ${flicker * 0.06})`,
-        boxShadow: `0 0 30px rgba(0, 180, 255, ${flicker * 0.1})`,
-      }} />
-    </div>
-  )
-}
-
-function MiamiOverlay() {
-  return (
-    <div className="absolute bottom-[12%] left-0 w-full h-10 overflow-hidden pointer-events-none z-10">
-      <svg className="absolute" style={{ animation: 'walker 20s linear infinite' }} width="20" height="34" viewBox="0 0 20 34">
-        <circle cx="10" cy="4" r="3.5" fill="#C68642" />
-        <rect x="7" y="8" width="6" height="12" rx="2" fill="#FF6B6B" />
-        <line x1="10" y1="20" x2="7" y2="32" stroke="#C68642" strokeWidth="2" />
-        <line x1="10" y1="20" x2="13" y2="32" stroke="#C68642" strokeWidth="2" />
-      </svg>
-      <style>{`@keyframes walker { 0% { left: 110%; } 100% { left: -40px; } }`}</style>
-    </div>
-  )
-}
-
-function BirdsOverlay() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-      {[0, 1, 2].map(i => (
-        <svg key={i} className="absolute" style={{
-          top: `${8 + i * 12}%`,
-          animation: `birdFly ${10 + i * 3}s ${i * 4}s linear infinite`,
-        }} width="24" height="10" viewBox="0 0 24 10">
-          <path d="M0 5 Q6 0 12 5 Q18 0 24 5" fill="none" stroke="rgba(50,50,50,0.5)" strokeWidth="1.5" />
-        </svg>
-      ))}
-      <style>{`@keyframes birdFly { 0% { left: -40px; } 100% { left: 110%; } }`}</style>
-    </div>
   )
 }
 
@@ -343,7 +227,7 @@ function BirdsOverlay() {
 
 function StarsEffect({ timeOfDay }) {
   if (timeOfDay !== 'night' && timeOfDay !== 'evening') return null
-  const stars = Array.from({ length: 30 }, (_, i) => ({
+  const stars = Array.from({ length: 40 }, (_, i) => ({
     id: i, x: Math.random() * 100, y: Math.random() * 50,
     size: 1 + Math.random() * 2, delay: Math.random() * 3,
   }))
@@ -390,167 +274,149 @@ function FallbackSky({ weatherType, timeOfDay }) {
 function InfoCard({ city, temperature, weatherDesc, timezone }) {
   const tempF = temperature != null ? Math.round(temperature * 9 / 5 + 32) : null
   return (
-    <div className="absolute top-4 left-4 z-30 px-4 py-3 rounded-xl"
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 px-6 py-3 text-center"
       style={{
-        background: 'rgba(255,255,255,0.15)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.25)',
+        background: 'rgba(0,0,0,0.25)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.15)',
+        borderRadius: '24px',
       }}>
-      <h3 className="font-serif text-lg font-semibold text-white drop-shadow-md">{city}</h3>
-      {temperature != null && (
-        <p className="text-sm text-white/90 drop-shadow-sm font-sans">
-          {Math.round(temperature)}°C / {tempF}°F
-        </p>
-      )}
-      {weatherDesc && <p className="text-xs text-white/80 drop-shadow-sm font-sans capitalize">{weatherDesc}</p>}
-      <p className="text-xs text-white/70 mt-1 font-sans">{getCityTime(timezone)}</p>
+      <h3 className="font-serif text-2xl font-light text-white drop-shadow-md tracking-wide">{city}</h3>
+      <div className="flex items-center justify-center gap-3 mt-1">
+        {temperature != null && (
+          <span className="text-sm text-white/90 drop-shadow-sm font-sans font-light">
+            {Math.round(temperature)}°C / {tempF}°F
+          </span>
+        )}
+        <span className="text-white/40">|</span>
+        {weatherDesc && <span className="text-sm text-white/80 drop-shadow-sm font-sans font-light capitalize">{weatherDesc}</span>}
+        <span className="text-white/40">|</span>
+        <span className="text-sm text-white/70 font-sans font-light">{getCityTime(timezone)}</span>
+      </div>
     </div>
   )
 }
 
-// ─── Window Frame ───
+// ─── Window Frame — organic arched design ───
 
 function WindowFrame({ children, timeOfDay }) {
   const isNight = timeOfDay === 'night' || timeOfDay === 'evening'
+
   return (
     <div className="relative w-full h-full flex items-center justify-center"
-      style={{ background: 'linear-gradient(135deg, #F5F0E8 0%, #E8E0D0 50%, #F0EBE3 100%)' }}>
+      style={{
+        background: isNight
+          ? 'linear-gradient(135deg, #1a1510 0%, #2a2018 50%, #1a1510 100%)'
+          : 'linear-gradient(135deg, #F5F0E8 0%, #E8E0D0 50%, #F0EBE3 100%)',
+      }}>
+
       {/* Subtle wall texture */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{
-        backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h40v40H0z\' fill=\'none\'/%3E%3Cpath d=\'M0 20h40M20 0v40\' stroke=\'%23000\' stroke-width=\'.5\'/%3E%3C/svg%3E")',
+      <div className="absolute inset-0 opacity-[0.02]" style={{
+        backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence baseFrequency=\'.8\' numOctaves=\'4\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'.5\'/%3E%3C/svg%3E")',
       }} />
 
-      {/* Dark vignette */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 100%)',
-      }} />
+      {/* Room ambient light — warm glow at night */}
+      {isNight && (
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: 'radial-gradient(ellipse at 50% 80%, rgba(255,180,80,0.08) 0%, transparent 60%)',
+        }} />
+      )}
 
-      {/* Bay window structure */}
-      <div className="relative" style={{ width: '90vw', height: '88vh', maxWidth: '1600px' }}>
-        {/* Outer wooden frame */}
-        <div className="absolute inset-0 rounded-t-3xl" style={{
-          background: 'linear-gradient(135deg, #8B6914 0%, #A0782C 25%, #6B4F10 50%, #8B6914 75%, #A0782C 100%)',
-          padding: '12px',
-          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2)',
+      {/* Window container */}
+      <div className="relative" style={{ width: '85vw', height: '85vh', maxWidth: '1400px', maxHeight: '900px' }}>
+
+        {/* SVG clip path for arched window shape */}
+        <svg className="absolute" width="0" height="0">
+          <defs>
+            <clipPath id="archClip" clipPathUnits="objectBoundingBox">
+              <path d="M 0 1 L 0 0.22 Q 0 0, 0.12 0 L 0.88 0 Q 1 0, 1 0.22 L 1 1 Z" />
+            </clipPath>
+          </defs>
+        </svg>
+
+        {/* Outer frame with wood grain */}
+        <div className="absolute" style={{
+          inset: '-14px',
+          clipPath: 'url(#archClip)',
+          background: 'linear-gradient(180deg, #5C4318 0%, #7A5A2E 20%, #6B4C22 40%, #7A5A2E 60%, #5C4318 80%, #4A3612 100%)',
+          boxShadow: '0 12px 48px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1)',
         }}>
-          {/* Inner frame shadow */}
-          <div className="absolute inset-3 rounded-t-2xl" style={{
-            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.3)',
+          {/* Wood grain lines */}
+          <div className="absolute inset-0 opacity-[0.08]" style={{
+            background: 'repeating-linear-gradient(180deg, transparent, transparent 8px, rgba(0,0,0,0.15) 8px, transparent 9px)',
           }} />
-          {/* Glass area */}
-          <div className="relative w-full h-full rounded-t-2xl overflow-hidden" style={{
-            boxShadow: 'inset 0 0 30px rgba(0,0,0,0.15)',
-          }}>
-            {children}
-
-            {/* Window dividers - bay window style (3 panels) */}
-            <div className="absolute inset-0 pointer-events-none z-20">
-              {/* Vertical dividers */}
-              <div className="absolute top-0 bottom-0 left-[33.3%] w-3" style={{
-                background: 'linear-gradient(90deg, #6B4F10, #A0782C, #6B4F10)',
-                boxShadow: '0 0 8px rgba(0,0,0,0.3)',
-              }} />
-              <div className="absolute top-0 bottom-0 left-[66.6%] w-3" style={{
-                background: 'linear-gradient(90deg, #6B4F10, #A0782C, #6B4F10)',
-                boxShadow: '0 0 8px rgba(0,0,0,0.3)',
-              }} />
-              {/* Horizontal divider */}
-              <div className="absolute left-0 right-0 top-[55%] h-3" style={{
-                background: 'linear-gradient(180deg, #6B4F10, #A0782C, #6B4F10)',
-                boxShadow: '0 0 8px rgba(0,0,0,0.3)',
-              }} />
-            </div>
-
-            {/* Glass reflection */}
-            <div className="absolute inset-0 pointer-events-none z-20 opacity-[0.06]" style={{
-              background: 'linear-gradient(135deg, white 0%, transparent 40%, transparent 60%, white 100%)',
-            }} />
-          </div>
         </div>
 
-        {/* Window sill */}
-        <div className="absolute -bottom-1 left-[-2%] right-[-2%] h-14 z-30" style={{
-          background: 'linear-gradient(180deg, #A0782C 0%, #8B6914 40%, #6B4F10 100%)',
-          borderRadius: '0 0 8px 8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.15)',
+        {/* Glass area */}
+        <div className="absolute inset-0 overflow-hidden" style={{ clipPath: 'url(#archClip)' }}>
+          {children}
+
+          {/* Subtle glass reflection — curved highlight */}
+          <div className="absolute inset-0 pointer-events-none z-20" style={{
+            background: 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, transparent 30%, transparent 70%, rgba(255,255,255,0.03) 100%)',
+          }} />
+
+          {/* Water droplets on glass (rain/storm) */}
+        </div>
+
+        {/* Thin center mullion — just a subtle vertical line */}
+        <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[6px] z-20 pointer-events-none" style={{
+          clipPath: 'url(#archClip)',
+          background: 'linear-gradient(90deg, #4A3612, #7A5A2E, #4A3612)',
+          boxShadow: '0 0 6px rgba(0,0,0,0.3)',
+        }} />
+
+        {/* Thin horizontal bar at 60% */}
+        <div className="absolute left-0 right-0 top-[60%] h-[6px] z-20 pointer-events-none" style={{
+          background: 'linear-gradient(180deg, #4A3612, #7A5A2E, #4A3612)',
+          boxShadow: '0 0 6px rgba(0,0,0,0.3)',
+        }} />
+
+        {/* Deep window sill with perspective */}
+        <div className="absolute -bottom-3 left-[-3%] right-[-3%] h-10 z-30" style={{
+          background: 'linear-gradient(180deg, #7A5A2E 0%, #6B4C22 50%, #5C4318 100%)',
+          borderRadius: '0 0 6px 6px',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.1)',
         }}>
-          {/* Sill details */}
-          <div className="absolute top-2 left-0 right-0 h-[1px] bg-white/10" />
-          <div className="absolute top-4 left-0 right-0 h-[1px] bg-black/10" />
-
-          {/* Coffee mug */}
-          <div className="absolute bottom-2 left-[20%] z-10">
-            <svg width="28" height="28" viewBox="0 0 28 28">
-              <rect x="4" y="6" width="16" height="16" rx="2" fill="#D4A574" />
-              <rect x="6" y="8" width="12" height="4" rx="1" fill="#6B3E1F" />
-              <path d="M20 10 Q26 10 26 16 Q26 22 20 22" fill="none" stroke="#D4A574" strokeWidth="2.5" />
-              <ellipse cx="12" cy="7" rx="7" ry="1.5" fill="#C49A6C" />
-            </svg>
-          </div>
-
-          {/* Succulent plant */}
-          <div className="absolute bottom-2 right-[22%] z-10">
-            <svg width="32" height="32" viewBox="0 0 32 32">
-              <rect x="10" y="20" width="12" height="10" rx="1" fill="#C67B4E" />
-              <rect x="9" y="18" width="14" height="4" rx="1" fill="#D4956B" />
-              <ellipse cx="16" cy="18" rx="5" ry="3" fill="#5B8C5A" />
-              <ellipse cx="12" cy="16" rx="3" ry="4" fill="#6B9E6A" />
-              <ellipse cx="20" cy="16" rx="3" ry="4" fill="#6B9E6A" />
-              <ellipse cx="16" cy="14" rx="3" ry="5" fill="#7BB07A" />
-            </svg>
-          </div>
+          <div className="absolute top-1 left-0 right-0 h-[1px] bg-white/5" />
         </div>
 
-        {/* Left curtain */}
-        <div className="absolute top-0 -left-4 w-20 h-full z-25 pointer-events-none" style={{
-          animation: 'curtainSway 6s ease-in-out infinite',
-          transformOrigin: 'top center',
+        {/* Sheer curtain — left, barely there */}
+        <div className="absolute top-0 -left-2 w-16 h-full z-25 pointer-events-none" style={{
+          clipPath: 'url(#archClip)',
         }}>
-          <div className="w-full h-full rounded-tl-xl" style={{
-            background: 'linear-gradient(90deg, #8B4513 0%, #A0522D 30%, #8B4513 60%, #6B3410 100%)',
-            opacity: 0.85,
-            boxShadow: '4px 0 12px rgba(0,0,0,0.2)',
-          }}>
-            <div className="absolute inset-0" style={{
-              background: 'repeating-linear-gradient(180deg, transparent, transparent 20px, rgba(0,0,0,0.05) 20px, rgba(0,0,0,0.05) 21px)',
-            }} />
-          </div>
+          <div className="w-full h-full" style={{
+            background: 'linear-gradient(90deg, rgba(255,250,245,0.35) 0%, rgba(255,250,245,0.15) 50%, transparent 100%)',
+            animation: 'sheerSway 8s ease-in-out infinite',
+            transformOrigin: 'top left',
+          }} />
         </div>
 
-        {/* Right curtain */}
-        <div className="absolute top-0 -right-4 w-20 h-full z-25 pointer-events-none" style={{
-          animation: 'curtainSway 6s 1s ease-in-out infinite',
-          transformOrigin: 'top center',
+        {/* Sheer curtain — right */}
+        <div className="absolute top-0 -right-2 w-16 h-full z-25 pointer-events-none" style={{
+          clipPath: 'url(#archClip)',
         }}>
-          <div className="w-full h-full rounded-tr-xl" style={{
-            background: 'linear-gradient(270deg, #8B4513 0%, #A0522D 30%, #8B4513 60%, #6B3410 100%)',
-            opacity: 0.85,
-            boxShadow: '-4px 0 12px rgba(0,0,0,0.2)',
-          }}>
-            <div className="absolute inset-0" style={{
-              background: 'repeating-linear-gradient(180deg, transparent, transparent 20px, rgba(0,0,0,0.05) 20px, rgba(0,0,0,0.05) 21px)',
-            }} />
-          </div>
+          <div className="w-full h-full" style={{
+            background: 'linear-gradient(270deg, rgba(255,250,245,0.35) 0%, rgba(255,250,245,0.15) 50%, transparent 100%)',
+            animation: 'sheerSway 8s 2s ease-in-out infinite',
+            transformOrigin: 'top right',
+          }} />
         </div>
 
-        {/* Interior lamp glow on sill at night */}
+        {/* Interior light spilling in at night */}
         {isNight && (
-          <div className="absolute -bottom-1 left-[15%] w-32 h-16 z-25 pointer-events-none" style={{
-            background: 'radial-gradient(ellipse at bottom, rgba(255,200,100,0.4) 0%, transparent 70%)',
-            animation: 'lampGlow 4s ease-in-out infinite',
+          <div className="absolute -bottom-3 left-[30%] right-[30%] h-10 z-25 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse at bottom, rgba(255,200,100,0.25) 0%, transparent 100%)',
           }} />
         )}
       </div>
 
       <style>{`
-        @keyframes curtainSway {
-          0%, 100% { transform: skewX(0deg); }
-          50% { transform: skewX(0.5deg); }
-        }
-        @keyframes lampGlow {
-          0%, 100% { opacity: 0.7; }
-          50% { opacity: 1; }
+        @keyframes sheerSway {
+          0%, 100% { transform: skewX(0deg) translateX(0); }
+          30% { transform: skewX(0.8deg) translateX(2px); }
+          70% { transform: skewX(-0.3deg) translateX(-1px); }
         }
       `}</style>
     </div>
@@ -567,7 +433,7 @@ function LoadingView() {
       animation: 'loadingShift 3s ease-in-out infinite',
     }}>
       <div className="text-center">
-        <p className="font-serif text-2xl text-gray-500/80 animate-pulse">Looking outside...</p>
+        <p className="font-serif text-2xl text-gray-500/80 animate-pulse tracking-wider">Looking outside...</p>
       </div>
       <style>{`
         @keyframes loadingShift {
@@ -604,7 +470,6 @@ export default function App() {
   const [imageFailed, setImageFailed] = useState(false)
   const abortRef = useRef(null)
 
-  // Detect location via IP
   const detectLocation = useCallback(async () => {
     try {
       const res = await fetch('https://ipapi.co/json/')
@@ -613,11 +478,9 @@ export default function App() {
         return { city: data.city, lat: data.latitude, lon: data.longitude, tz: data.timezone }
       }
     } catch (e) { console.warn('IP geolocation failed:', e) }
-    // Fallback to NYC
     return { city: 'New York', lat: 40.7128, lon: -74.006, tz: 'America/New_York' }
   }, [])
 
-  // Fetch weather
   const fetchWeather = useCallback(async (lat, lon) => {
     try {
       const res = await fetch(
@@ -637,11 +500,9 @@ export default function App() {
     }
   }, [])
 
-  // Generate scene image
   const generateScene = useCallback(async (city, weatherData, tz) => {
     const hour = getCityHour(tz)
     try {
-      // Step 1: Get image prompt from Claude
       const promptRes = await fetch('/api/generate-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -653,14 +514,25 @@ export default function App() {
       if (!promptRes.ok) throw new Error('Prompt generation failed')
       const { prompt } = await promptRes.json()
 
-      // Step 2: Generate image
-      const imgRes = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      })
-      if (!imgRes.ok) throw new Error('Image generation failed')
-      const { image } = await imgRes.json()
+      // Generate image with retry for model loading
+      let image = null
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const imgRes = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt }),
+        })
+        const imgData = await imgRes.json()
+        if (imgRes.ok) {
+          image = imgData.image
+          break
+        }
+        if (imgData.retry && attempt < 2) {
+          await new Promise(r => setTimeout(r, 5000))
+          continue
+        }
+        throw new Error('Image generation failed')
+      }
       return image
     } catch (e) {
       console.warn('Scene generation failed:', e)
@@ -668,7 +540,6 @@ export default function App() {
     }
   }, [])
 
-  // Load scene for a city
   const loadScene = useCallback(async (cityData) => {
     setTransitioning(true)
     setLoading(true)
@@ -699,7 +570,6 @@ export default function App() {
     setLoading(false)
   }, [detectLocation, fetchWeather, generateScene])
 
-  // Initial load
   useEffect(() => {
     loadScene(null)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -715,12 +585,10 @@ export default function App() {
   return (
     <div className="w-screen h-screen overflow-hidden select-none">
       <WindowFrame timeOfDay={timeOfDay}>
-        {/* Scene background */}
         {loading && !sceneImage && !imageFailed ? (
           <LoadingView />
         ) : (
           <>
-            {/* AI-generated or fallback background */}
             {sceneImage ? (
               <div className="absolute inset-0 transition-opacity duration-1000"
                 style={{ opacity: transitioning ? 0 : 1 }}>
@@ -730,14 +598,9 @@ export default function App() {
               <FallbackSky weatherType={weatherType} timeOfDay={timeOfDay} />
             )}
 
-            {/* Weather effects */}
             <WeatherEffects weatherType={weatherType} timeOfDay={timeOfDay} />
             <StarsEffect timeOfDay={timeOfDay} />
 
-            {/* City overlay animations */}
-            {location && <CityOverlay city={location.city} />}
-
-            {/* Info card */}
             {location && weather && (
               <InfoCard
                 city={location.city}
@@ -749,24 +612,25 @@ export default function App() {
           </>
         )}
 
-        {/* Frosted transition */}
         <FrostedTransition active={transitioning} />
       </WindowFrame>
 
-      {/* City toggle bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-3 pt-1">
-        <div className="flex gap-1 px-3 py-2 rounded-full" style={{
-          background: 'linear-gradient(180deg, #8B6914 0%, #6B4F10 100%)',
-          boxShadow: '0 -2px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.15)',
+      {/* City selector — floating pills */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="flex gap-1.5 px-4 py-2.5 rounded-full" style={{
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
         }}>
           {CITIES.map(city => {
             const isActive = selectedCity === city.name || (!selectedCity && city.name === 'Auto')
             return (
               <button key={city.name} onClick={() => handleCitySelect(city)}
-                className={`px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-200 whitespace-nowrap
+                className={`px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-300 whitespace-nowrap
                   ${isActive
-                    ? 'bg-amber-400/90 text-amber-950 shadow-md'
-                    : 'text-amber-100/80 hover:bg-amber-800/40 hover:text-amber-100'
+                    ? 'bg-white/90 text-gray-900 shadow-lg'
+                    : 'text-white/70 hover:bg-white/15 hover:text-white'
                   }`}
               >
                 {city.label}

@@ -7,22 +7,39 @@ export default async function handler(req, res) {
     const { prompt } = req.body
     const hfToken = process.env.HF_TOKEN
 
+    if (!hfToken) {
+      return res.status(500).json({ error: 'HF_TOKEN not configured' })
+    }
+
     const response = await fetch(
       'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(hfToken ? { 'Authorization': `Bearer ${hfToken}` } : {})
+          'Authorization': `Bearer ${hfToken}`,
         },
-        body: JSON.stringify({ inputs: prompt })
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            width: 1024,
+            height: 768,
+            num_inference_steps: 4,
+          }
+        })
       }
     )
 
     if (!response.ok) {
       const text = await response.text()
       console.error('HF API error:', response.status, text)
-      throw new Error(`HF API returned ${response.status}`)
+
+      // If model is loading, tell the client to retry
+      if (response.status === 503) {
+        return res.status(503).json({ error: 'Model loading, try again in a moment', retry: true })
+      }
+
+      throw new Error(`HF API returned ${response.status}: ${text}`)
     }
 
     const buffer = Buffer.from(await response.arrayBuffer())
