@@ -75,19 +75,19 @@ const CITY_PHOTOS = {
   ],
 }
 
-// City-specific animation types
+// City-specific animation types — hasWater means boats instead of cars near bottom
 const CITY_ANIMATIONS = {
-  'New York': { type: 'urban-busy', elements: ['people', 'cars', 'neon'] },
-  'Atlanta': { type: 'urban', elements: ['people', 'cars'] },
-  'Miami': { type: 'tropical', elements: ['people', 'palms', 'birds'] },
-  'Austin': { type: 'lively', elements: ['people', 'music', 'cars'] },
-  'San Francisco': { type: 'urban', elements: ['people', 'cablecar'] },
-  'Seattle': { type: 'rainy-urban', elements: ['people', 'umbrellas'] },
-  'London': { type: 'classic', elements: ['people', 'bus', 'umbrellas'] },
-  'Lisbon': { type: 'charming', elements: ['people', 'tram'] },
-  'Ho Chi Minh City': { type: 'bustling', elements: ['scooters', 'people'] },
-  'Barcelona': { type: 'vibrant', elements: ['people', 'performers'] },
-  'Tokyo': { type: 'neon-city', elements: ['people', 'neon', 'trains'] },
+  'New York': { elements: ['people', 'cars', 'neon', 'hotdog-cart', 'taxi'], hasWater: false },
+  'Atlanta': { elements: ['people', 'cars', 'cyclist', 'jogger'], hasWater: false },
+  'Miami': { elements: ['people', 'palms', 'birds', 'surfer', 'boat'], hasWater: true },
+  'Austin': { elements: ['people', 'music', 'cars', 'foodtruck', 'guitarist'], hasWater: false },
+  'San Francisco': { elements: ['people', 'cablecar', 'cyclist', 'boat'], hasWater: true },
+  'Seattle': { elements: ['people', 'cars', 'coffee-cup', 'cyclist'], hasWater: false },
+  'London': { elements: ['people', 'bus', 'cyclist', 'boat'], hasWater: true },
+  'Lisbon': { elements: ['people', 'tram', 'boat', 'guitarist'], hasWater: true },
+  'Ho Chi Minh City': { elements: ['scooters', 'people', 'foodvendor', 'boat'], hasWater: true },
+  'Barcelona': { elements: ['people', 'performers', 'cyclist', 'boat'], hasWater: true },
+  'Tokyo': { elements: ['people', 'neon', 'trains', 'vending-machine'], hasWater: false },
 }
 
 function getUnsplashUrl(photoId) {
@@ -326,7 +326,12 @@ function StarsEffect({ timeOfDay }) {
 
 // --- City-specific Ambient Animations ---
 
-function WalkingPerson({ id, goingRight, yPosition, duration, delay, scale, color }) {
+// Cartoon-style 2D walking person with optional umbrella, hair, accessories
+function WalkingPerson({ id, goingRight, yPosition, duration, delay, scale, color, hasUmbrella, shirtColor, hairColor }) {
+  const shirt = shirtColor || color
+  const hair = hairColor || '#2C2C2C'
+  const skin = '#F5CBA7'
+  const legSpeed = Math.max(0.3, duration * 0.06)
   return (
     <div className="absolute" style={{
       top: `${yPosition}%`,
@@ -335,20 +340,46 @@ function WalkingPerson({ id, goingRight, yPosition, duration, delay, scale, colo
       transform: `scale(${scale})`,
       opacity: 0,
     }}>
-      <svg width="28" height="52" viewBox="0 0 28 52" style={{
+      <svg width="36" height="64" viewBox="0 0 36 64" style={{
         transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
-        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
+        filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.5))',
       }}>
-        <circle cx="14" cy="6" r="5" fill={color} />
-        <rect x="10" y="11" width="8" height="18" rx="3" fill={color} />
-        <rect x="8" y="29" width="5" height="16" rx="2" fill={color} opacity="0.9"
-          style={{ animation: `legSwing ${duration * 0.08}s ease-in-out infinite alternate` }} />
-        <rect x="15" y="29" width="5" height="16" rx="2" fill={color} opacity="0.9"
-          style={{ animation: `legSwing ${duration * 0.08}s ease-in-out infinite alternate-reverse` }} />
-        <rect x="4" y="14" width="5" height="3" rx="1.5" fill={color} opacity="0.8"
-          style={{ animation: `armSwing ${duration * 0.08}s ease-in-out infinite alternate` }} />
-        <rect x="19" y="14" width="5" height="3" rx="1.5" fill={color} opacity="0.8"
-          style={{ animation: `armSwing ${duration * 0.08}s ease-in-out infinite alternate-reverse` }} />
+        {/* Umbrella */}
+        {hasUmbrella && (
+          <g>
+            <line x1="18" y1="-18" x2="18" y2="8" stroke="#555" strokeWidth="1.5" />
+            <path d="M4,-18 Q18,-30 32,-18 Q25,-16 18,-18 Q11,-16 4,-18 Z" fill="#3498DB" stroke="#2980B9" strokeWidth="0.5" />
+          </g>
+        )}
+        {/* Hair */}
+        <ellipse cx="18" cy="5" rx="7" ry="7.5" fill={hair} />
+        {/* Head */}
+        <circle cx="18" cy="7" r="6" fill={skin} />
+        {/* Eyes */}
+        <circle cx="15.5" cy="6" r="1" fill="#333" />
+        <circle cx="20.5" cy="6" r="1" fill="#333" />
+        {/* Smile */}
+        <path d="M15.5,9.5 Q18,12 20.5,9.5" fill="none" stroke="#333" strokeWidth="0.7" />
+        {/* Torso / shirt */}
+        <rect x="11" y="13" width="14" height="18" rx="4" fill={shirt} />
+        {/* Collar */}
+        <path d="M14,13 L18,16 L22,13" fill="none" stroke={shirt === '#ECF0F1' ? '#CCC' : 'rgba(0,0,0,0.15)'} strokeWidth="1" />
+        {/* Arms swinging */}
+        <g style={{ transformOrigin: '11px 15px', animation: `armSwing ${legSpeed}s ease-in-out infinite alternate` }}>
+          <rect x="5" y="14" width="6" height="15" rx="3" fill={skin} />
+        </g>
+        <g style={{ transformOrigin: '25px 15px', animation: `armSwing ${legSpeed}s ease-in-out infinite alternate-reverse` }}>
+          <rect x="25" y="14" width="6" height="15" rx="3" fill={skin} />
+        </g>
+        {/* Legs walking */}
+        <g style={{ transformOrigin: '14px 31px', animation: `legSwing ${legSpeed}s ease-in-out infinite alternate` }}>
+          <rect x="11" y="31" width="6" height="20" rx="3" fill="#34495E" />
+          <rect x="10" y="49" width="8" height="4" rx="2" fill="#555" />
+        </g>
+        <g style={{ transformOrigin: '22px 31px', animation: `legSwing ${legSpeed}s ease-in-out infinite alternate-reverse` }}>
+          <rect x="19" y="31" width="6" height="20" rx="3" fill="#34495E" />
+          <rect x="18" y="49" width="8" height="4" rx="2" fill="#555" />
+        </g>
       </svg>
     </div>
   )
@@ -381,29 +412,51 @@ function AnimatedCar({ id, goingRight, yPosition, duration, delay, carColor, sca
   )
 }
 
-function NeonSign({ x, y, width, height, color, delay, label }) {
+// NYC yellow taxi
+function TaxiCab({ goingRight, yPosition, duration, delay, scale }) {
+  return <AnimatedCar id="taxi" goingRight={goingRight} yPosition={yPosition} duration={duration} delay={delay} carColor="#F1C40F" scale={scale} />
+}
+
+// Neon sign cluster — spawns 5-8 signs at once
+function NeonCluster({ baseX, baseY }) {
+  const neonColors = ['#FF1493', '#00FFFF', '#FF4500', '#ADFF2F', '#FF69B4', '#7B68EE', '#FFD700', '#FF6347']
+  const labels = ['BAR', 'OPEN', 'EAT', 'LIVE', '24H', 'CLUB', 'JAZZ', 'RAMEN', 'SUSHI', 'BEER', 'CAFE', 'HOTEL', 'KARAOKE']
+  const count = 5 + Math.floor(Math.random() * 4)
+  const signs = Array.from({ length: count }, (_, i) => ({
+    id: i,
+    x: baseX + (Math.random() - 0.5) * 40,
+    y: baseY + (Math.random() - 0.5) * 25,
+    color: neonColors[Math.floor(Math.random() * neonColors.length)],
+    label: labels[Math.floor(Math.random() * labels.length)],
+    delay: Math.random() * 3,
+    size: 0.7 + Math.random() * 0.6,
+  }))
   return (
-    <div className="absolute" style={{
-      left: `${x}%`, top: `${y}%`,
-      width, height,
-    }}>
-      <div style={{
-        width: '100%', height: '100%',
-        border: `2px solid ${color}`,
-        borderRadius: '4px',
-        boxShadow: `0 0 8px ${color}, 0 0 20px ${color}40, inset 0 0 8px ${color}30`,
-        animation: `neonFlicker ${2 + delay}s ease-in-out infinite`,
-        animationDelay: `${delay}s`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {label && (
-          <span style={{
-            color, fontSize: '10px', fontWeight: 'bold', letterSpacing: '1px',
-            textShadow: `0 0 6px ${color}, 0 0 12px ${color}`,
-          }}>{label}</span>
-        )}
-      </div>
-    </div>
+    <>
+      {signs.map(s => (
+        <div key={s.id} className="absolute" style={{
+          left: `${Math.max(2, Math.min(90, s.x))}%`,
+          top: `${Math.max(5, Math.min(55, s.y))}%`,
+          transform: `scale(${s.size})`,
+        }}>
+          <div style={{
+            padding: '3px 8px',
+            border: `2px solid ${s.color}`,
+            borderRadius: '4px',
+            boxShadow: `0 0 10px ${s.color}, 0 0 25px ${s.color}50, 0 0 40px ${s.color}20`,
+            animation: `neonFlicker ${2 + s.delay}s ease-in-out infinite`,
+            animationDelay: `${s.delay}s`,
+            whiteSpace: 'nowrap',
+          }}>
+            <span style={{
+              color: s.color, fontSize: '11px', fontWeight: 'bold', letterSpacing: '2px',
+              textShadow: `0 0 8px ${s.color}, 0 0 16px ${s.color}`,
+              fontFamily: 'monospace',
+            }}>{s.label}</span>
+          </div>
+        </div>
+      ))}
+    </>
   )
 }
 
@@ -544,13 +597,287 @@ function DoubleDecker({ goingRight, duration, delay }) {
   )
 }
 
-function CityAnimations({ cityName, timeOfDay }) {
+// Boat for waterfront cities
+function Boat({ goingRight, yPosition, duration, delay, boatColor }) {
+  return (
+    <div className="absolute" style={{
+      top: `${yPosition}%`,
+      left: goingRight ? '-12%' : '112%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      opacity: 0,
+    }}>
+      <svg width="70" height="40" viewBox="0 0 70 40" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.3))',
+        animation: `boatBob 2s ease-in-out infinite`,
+      }}>
+        <path d="M5,24 Q10,18 20,18 L50,18 Q60,18 65,24 L60,32 Q55,36 35,36 Q15,36 10,32 Z" fill={boatColor || '#F5F5DC'} />
+        <rect x="32" y="4" width="3" height="16" rx="1" fill="#8B7355" />
+        <path d="M35,4 Q50,10 35,18" fill="rgba(255,255,255,0.8)" stroke="#DDD" strokeWidth="0.5" />
+        <path d="M15,22 L55,22" stroke="rgba(0,0,0,0.1)" strokeWidth="0.5" />
+        <path d="M10,28 Q20,25 35,28 Q50,31 60,28" fill="none" stroke={boatColor || '#E8E0C8'} strokeWidth="1" opacity="0.5" />
+      </svg>
+    </div>
+  )
+}
+
+// Cyclist
+function Cyclist({ goingRight, yPosition, duration, delay, scale, color }) {
+  return (
+    <div className="absolute" style={{
+      top: `${yPosition}%`,
+      left: goingRight ? '-8%' : '108%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      transform: `scale(${scale})`,
+      opacity: 0,
+    }}>
+      <svg width="50" height="44" viewBox="0 0 50 44" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
+      }}>
+        <circle cx="12" cy="34" r="8" fill="none" stroke="#333" strokeWidth="2" />
+        <circle cx="38" cy="34" r="8" fill="none" stroke="#333" strokeWidth="2" />
+        <path d="M12,34 L22,20 L35,20 L38,34" fill="none" stroke="#666" strokeWidth="2" />
+        <path d="M22,20 L28,20" stroke="#666" strokeWidth="2" />
+        <circle cx="26" cy="12" r="5" fill="#F5CBA7" />
+        <rect x="22" y="17" width="8" height="10" rx="3" fill={color || '#3498DB'} />
+        <g style={{ transformOrigin: '12px 34px', animation: `pedalSpin 0.5s linear infinite` }}>
+          <line x1="12" y1="28" x2="12" y2="40" stroke="#555" strokeWidth="2" />
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+// Hotdog cart (NYC)
+function HotdogCart({ x }) {
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, bottom: '12%',
+      animation: `fadeInPlace 1s ease-out forwards`,
+      opacity: 0,
+    }}>
+      <svg width="60" height="50" viewBox="0 0 60 50" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }}>
+        <rect x="5" y="15" width="50" height="25" rx="3" fill="#C0392B" />
+        <rect x="8" y="18" width="44" height="8" rx="2" fill="#E74C3C" />
+        <text x="12" y="24.5" fontSize="6" fill="#FFD700" fontWeight="bold">HOT DOGS</text>
+        <rect x="5" y="40" width="50" height="4" rx="1" fill="#888" />
+        <circle cx="12" cy="47" r="4" fill="#333" />
+        <circle cx="48" cy="47" r="4" fill="#333" />
+        <rect x="20" y="8" width="20" height="8" rx="2" fill="#E8C84A" />
+        <rect x="25" y="2" width="2" height="8" fill="#888" />
+        <rect x="22" y="0" width="8" height="4" rx="1" fill="#FFF" stroke="#DDD" strokeWidth="0.5" />
+      </svg>
+    </div>
+  )
+}
+
+// Food truck (Austin)
+function FoodTruck({ goingRight, duration, delay }) {
+  return (
+    <div className="absolute" style={{
+      top: '76%',
+      left: goingRight ? '-15%' : '115%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      opacity: 0,
+    }}>
+      <svg width="100" height="50" viewBox="0 0 100 50" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.4))',
+      }}>
+        <rect x="10" y="8" width="70" height="30" rx="4" fill="#2ECC71" />
+        <rect x="80" y="15" width="15" height="23" rx="3" fill="#27AE60" />
+        <rect x="82" y="18" width="10" height="10" rx="1" fill="rgba(150,200,255,0.5)" />
+        <text x="20" y="28" fontSize="8" fill="#FFF" fontWeight="bold">TACOS</text>
+        <rect x="20" y="10" width="18" height="10" rx="1" fill="rgba(150,200,255,0.5)" />
+        <circle cx="25" cy="44" r="5" fill="#222" />
+        <circle cx="70" cy="44" r="5" fill="#222" />
+        <circle cx="88" cy="44" r="5" fill="#222" />
+      </svg>
+    </div>
+  )
+}
+
+// Guitarist sitting on sidewalk
+function Guitarist({ x }) {
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, bottom: '10%',
+      animation: `fadeInPlace 1s ease-out forwards`,
+      opacity: 0,
+    }}>
+      <svg width="36" height="48" viewBox="0 0 36 48" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>
+        <circle cx="18" cy="7" r="6" fill="#F5CBA7" />
+        <ellipse cx="18" cy="4" rx="7" ry="5" fill="#2C2C2C" />
+        <rect x="12" y="13" width="12" height="16" rx="3" fill="#E74C3C" />
+        <rect x="8" y="29" width="8" height="12" rx="2" fill="#34495E" />
+        <rect x="20" y="29" width="8" height="12" rx="2" fill="#34495E" />
+        <ellipse cx="28" cy="30" rx="6" ry="10" fill="#8B4513" stroke="#6B3410" strokeWidth="0.5" style={{ animation: `guitarStrum 1s ease-in-out infinite alternate` }} />
+        <line x1="28" y1="20" x2="28" y2="40" stroke="#6B3410" strokeWidth="1.5" />
+      </svg>
+    </div>
+  )
+}
+
+// Surfer walking with board (Miami)
+function Surfer({ goingRight, yPosition, duration, delay, scale }) {
+  return (
+    <div className="absolute" style={{
+      top: `${yPosition}%`,
+      left: goingRight ? '-8%' : '108%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      transform: `scale(${scale})`,
+      opacity: 0,
+    }}>
+      <svg width="50" height="60" viewBox="0 0 50 60" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
+      }}>
+        <circle cx="20" cy="7" r="6" fill="#D4A574" />
+        <rect x="14" y="13" width="12" height="16" rx="3" fill="#00BCD4" />
+        <g style={{ transformOrigin: '20px 31px', animation: `legSwing 0.5s ease-in-out infinite alternate` }}>
+          <rect x="14" y="29" width="5" height="18" rx="2" fill="#D4A574" />
+        </g>
+        <g style={{ transformOrigin: '20px 31px', animation: `legSwing 0.5s ease-in-out infinite alternate-reverse` }}>
+          <rect x="21" y="29" width="5" height="18" rx="2" fill="#D4A574" />
+        </g>
+        <rect x="32" y="0" width="4" height="55" rx="2" fill="#F39C12" transform="rotate(8 34 30)" />
+      </svg>
+    </div>
+  )
+}
+
+// Food vendor (Vietnam)
+function FoodVendor({ x }) {
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, bottom: '10%',
+      animation: `fadeInPlace 1s ease-out forwards`,
+      opacity: 0,
+    }}>
+      <svg width="50" height="50" viewBox="0 0 50 50" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }}>
+        <circle cx="25" cy="8" r="5" fill="#F5CBA7" />
+        <ellipse cx="25" cy="3" rx="12" ry="5" fill="#8B7355" />
+        <rect x="19" y="13" width="12" height="14" rx="3" fill="#E8C84A" />
+        <rect x="17" y="27" width="7" height="15" rx="2" fill="#34495E" />
+        <rect x="26" y="27" width="7" height="15" rx="2" fill="#34495E" />
+        <rect x="5" y="18" width="40" height="3" rx="1" fill="#8B4513" />
+        <circle cx="10" cy="22" r="4" fill="#FF6347" opacity="0.8" />
+        <circle cx="20" cy="22" r="4" fill="#32CD32" opacity="0.8" />
+        <circle cx="40" cy="22" r="4" fill="#FFD700" opacity="0.8" />
+      </svg>
+    </div>
+  )
+}
+
+// Coffee cup floating (Seattle)
+function CoffeeCup({ x, delay }) {
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, bottom: '30%',
+      animation: `floatUp 5s ${delay}s ease-out infinite`,
+      opacity: 0,
+    }}>
+      <svg width="20" height="24" viewBox="0 0 20 24">
+        <rect x="4" y="6" width="12" height="16" rx="2" fill="#6B4226" />
+        <rect x="4" y="6" width="12" height="4" rx="1" fill="#8B5E3C" />
+        <path d="M16,10 Q20,10 20,14 Q20,18 16,18" fill="none" stroke="#6B4226" strokeWidth="1.5" />
+        <path d="M7,3 Q8,0 9,3" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1" style={{ animation: `steamWiggle 1.5s ease-in-out infinite` }} />
+        <path d="M10,4 Q11,1 12,4" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" style={{ animation: `steamWiggle 1.5s 0.3s ease-in-out infinite` }} />
+      </svg>
+    </div>
+  )
+}
+
+// Vending machine glow (Tokyo)
+function VendingMachine({ x }) {
+  const glowColor = ['#FF4444', '#4444FF', '#44FF44', '#FF44FF'][Math.floor(Math.random() * 4)]
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, bottom: '8%',
+      animation: `fadeInPlace 1s ease-out forwards`,
+      opacity: 0,
+    }}>
+      <svg width="28" height="44" viewBox="0 0 28 44" style={{ filter: `drop-shadow(0 0 8px ${glowColor}40)` }}>
+        <rect x="2" y="2" width="24" height="40" rx="2" fill="#2C3E50" />
+        <rect x="4" y="4" width="20" height="18" rx="1" fill={glowColor} opacity="0.3" />
+        <rect x="6" y="6" width="6" height="6" rx="1" fill={glowColor} opacity="0.6" />
+        <rect x="14" y="6" width="6" height="6" rx="1" fill={glowColor} opacity="0.5" />
+        <rect x="6" y="14" width="6" height="6" rx="1" fill={glowColor} opacity="0.4" />
+        <rect x="14" y="14" width="6" height="6" rx="1" fill={glowColor} opacity="0.7" />
+        <rect x="8" y="26" width="12" height="6" rx="1" fill="#111" />
+        <rect x="10" y="34" width="3" height="3" rx="0.5" fill={glowColor} opacity="0.8" style={{ animation: `neonFlicker 3s ease-in-out infinite` }} />
+      </svg>
+    </div>
+  )
+}
+
+// Street performer juggling (Barcelona)
+function StreetPerformer({ x }) {
+  return (
+    <div className="absolute" style={{
+      left: `${x}%`, bottom: '12%',
+      animation: `fadeInPlace 1s ease-out forwards`,
+      opacity: 0,
+    }}>
+      <svg width="40" height="60" viewBox="0 0 40 60" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>
+        <circle cx="20" cy="8" r="6" fill="#F5CBA7" />
+        <rect x="14" y="14" width="12" height="18" rx="3" fill="#9B59B6" />
+        <rect x="12" y="32" width="7" height="18" rx="2" fill="#2C3E50" />
+        <rect x="21" y="32" width="7" height="18" rx="2" fill="#2C3E50" />
+        {/* Juggling balls */}
+        <circle cx="8" cy="4" r="3" fill="#E74C3C" style={{ animation: `juggle1 1s ease-in-out infinite` }} />
+        <circle cx="20" cy="0" r="3" fill="#F39C12" style={{ animation: `juggle2 1s ease-in-out infinite` }} />
+        <circle cx="32" cy="4" r="3" fill="#2ECC71" style={{ animation: `juggle3 1s ease-in-out infinite` }} />
+      </svg>
+    </div>
+  )
+}
+
+// Jogger
+function Jogger({ goingRight, yPosition, duration, delay, scale }) {
+  return (
+    <div className="absolute" style={{
+      top: `${yPosition}%`,
+      left: goingRight ? '-6%' : '106%',
+      animation: `walkAcross${goingRight ? 'Right' : 'Left'} ${duration}s ${delay}s linear forwards`,
+      transform: `scale(${scale})`,
+      opacity: 0,
+    }}>
+      <svg width="36" height="56" viewBox="0 0 36 56" style={{
+        transform: goingRight ? 'scaleX(1)' : 'scaleX(-1)',
+        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.4))',
+      }}>
+        <circle cx="18" cy="7" r="6" fill="#F5CBA7" />
+        <rect x="12" y="13" width="12" height="14" rx="3" fill="#E74C3C" />
+        <g style={{ transformOrigin: '14px 27px', animation: `legSwing 0.25s ease-in-out infinite alternate` }}>
+          <rect x="11" y="27" width="6" height="18" rx="2" fill="#2C3E50" />
+          <rect x="10" y="43" width="8" height="4" rx="2" fill="#FFF" />
+        </g>
+        <g style={{ transformOrigin: '22px 27px', animation: `legSwing 0.25s ease-in-out infinite alternate-reverse` }}>
+          <rect x="19" y="27" width="6" height="18" rx="2" fill="#2C3E50" />
+          <rect x="18" y="43" width="8" height="4" rx="2" fill="#FFF" />
+        </g>
+        <g style={{ transformOrigin: '10px 15px', animation: `armSwing 0.25s ease-in-out infinite alternate` }}>
+          <rect x="5" y="14" width="6" height="12" rx="3" fill="#F5CBA7" />
+        </g>
+        <g style={{ transformOrigin: '26px 15px', animation: `armSwing 0.25s ease-in-out infinite alternate-reverse` }}>
+          <rect x="25" y="14" width="6" height="12" rx="3" fill="#F5CBA7" />
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+function CityAnimations({ cityName, timeOfDay, weatherType }) {
   const [entities, setEntities] = useState([])
   const idRef = useRef(0)
   const config = CITY_ANIMATIONS[cityName] || CITY_ANIMATIONS['New York']
   const isNight = timeOfDay === 'night' || timeOfDay === 'evening'
+  const isRainy = weatherType === 'rain' || weatherType === 'storm'
 
-  const personColors = ['#2C3E50', '#8B4513', '#34495E', '#1A1A2E', '#4A3728', '#2D2D2D', '#5B3A29', '#3C3C3C']
+  const shirtColors = ['#2C3E50', '#E74C3C', '#3498DB', '#27AE60', '#8E44AD', '#F39C12', '#1ABC9C', '#ECF0F1', '#D35400', '#2980B9']
+  const hairColors = ['#2C2C2C', '#4A3728', '#8B4513', '#DEB887', '#C0392B', '#1A1A2E', '#FFD700']
 
   useEffect(() => {
     setEntities([])
@@ -567,18 +894,21 @@ function CityAnimations({ cityName, timeOfDay }) {
 
       switch (element) {
         case 'people':
-        case 'umbrellas':
         case 'performers':
           entity.yPosition = 75 + Math.random() * 15
           entity.duration = 12 + Math.random() * 10
           entity.scale = 0.7 + Math.random() * 0.5
-          entity.color = personColors[Math.floor(Math.random() * personColors.length)]
+          entity.shirtColor = shirtColors[Math.floor(Math.random() * shirtColors.length)]
+          entity.hairColor = hairColors[Math.floor(Math.random() * hairColors.length)]
+          entity.color = entity.shirtColor
+          entity.hasUmbrella = isRainy
           break
         case 'cars':
+        case 'taxi':
           entity.yPosition = 80 + Math.random() * 10
           entity.duration = 6 + Math.random() * 5
           entity.scale = 0.8 + Math.random() * 0.4
-          entity.carColor = ['#2C3E50', '#E74C3C', '#3498DB', '#F39C12', '#1ABC9C', '#ECF0F1'][Math.floor(Math.random() * 6)]
+          entity.carColor = element === 'taxi' ? '#F1C40F' : ['#2C3E50', '#E74C3C', '#3498DB', '#F39C12', '#1ABC9C', '#ECF0F1'][Math.floor(Math.random() * 6)]
           break
         case 'scooters':
           entity.yPosition = 78 + Math.random() * 12
@@ -586,10 +916,8 @@ function CityAnimations({ cityName, timeOfDay }) {
           entity.scale = 0.8 + Math.random() * 0.3
           break
         case 'neon':
-          entity.x = 10 + Math.random() * 70
-          entity.y = 15 + Math.random() * 35
-          entity.neonColor = ['#FF1493', '#00FFFF', '#FF4500', '#ADFF2F', '#FF69B4', '#7B68EE'][Math.floor(Math.random() * 6)]
-          entity.label = ['BAR', 'OPEN', 'EAT', 'LIVE', '24H', 'CLUB', 'JAZZ'][Math.floor(Math.random() * 7)]
+          entity.baseX = 15 + Math.random() * 50
+          entity.baseY = 15 + Math.random() * 30
           break
         case 'birds':
           entity.delay = Math.random() * 3
@@ -602,66 +930,87 @@ function CityAnimations({ cityName, timeOfDay }) {
           entity.x = Math.random() * 90
           break
         case 'tram':
+        case 'cablecar':
           entity.duration = 15 + Math.random() * 5
           break
         case 'bus':
           entity.duration = 12 + Math.random() * 5
           break
-        case 'cablecar':
-          entity.duration = 18 + Math.random() * 5
-          entity.goingRight = true
-          break
         case 'trains':
           entity.duration = 5 + Math.random() * 3
           entity.yPosition = 82 + Math.random() * 8
+          break
+        case 'boat':
+          entity.yPosition = 85 + Math.random() * 8
+          entity.duration = 18 + Math.random() * 10
+          entity.boatColor = ['#F5F5DC', '#8B4513', '#FFF', '#2980B9'][Math.floor(Math.random() * 4)]
+          break
+        case 'cyclist':
+        case 'jogger':
+          entity.yPosition = 78 + Math.random() * 12
+          entity.duration = element === 'jogger' ? (8 + Math.random() * 5) : (10 + Math.random() * 6)
+          entity.scale = 0.7 + Math.random() * 0.4
+          entity.color = shirtColors[Math.floor(Math.random() * shirtColors.length)]
+          break
+        case 'surfer':
+          entity.yPosition = 80 + Math.random() * 10
+          entity.duration = 14 + Math.random() * 6
+          entity.scale = 0.8 + Math.random() * 0.3
+          break
+        case 'hotdog-cart':
+        case 'foodvendor':
+        case 'vending-machine':
+        case 'guitarist':
+        case 'foodtruck':
+        case 'coffee-cup':
+          entity.x = 15 + Math.random() * 65
+          entity.delay = Math.random() * 2
           break
         default:
           break
       }
 
       setEntities(prev => {
-        // Limit entities to avoid performance issues
         const filtered = prev.filter(e => Date.now() - e.spawnTime < 30000)
-        return [...filtered.slice(-12), entity]
+        return [...filtered.slice(-15), entity]
       })
     }
 
     // Spawn first few quickly
     const initialTimer = setTimeout(() => {
       spawn()
-      setTimeout(() => spawn(), 1500)
-      setTimeout(() => spawn(), 3000)
-    }, 1000)
+      setTimeout(() => spawn(), 800)
+      setTimeout(() => spawn(), 1600)
+      setTimeout(() => spawn(), 2400)
+    }, 500)
 
     // Then regularly
     const interval = setInterval(() => {
       spawn()
-    }, 3000 + Math.random() * 3000)
+    }, 2500 + Math.random() * 2500)
 
     return () => {
       clearTimeout(initialTimer)
       clearInterval(interval)
     }
-  }, [cityName]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cityName, isRainy]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
       {entities.map(entity => {
         switch (entity.element) {
           case 'people':
-          case 'performers':
             return <WalkingPerson key={entity.id} {...entity} />
-          case 'umbrellas':
-            return <WalkingPerson key={entity.id} {...entity} color="#4A6FA5" />
+          case 'performers':
+            return <StreetPerformer key={entity.id} x={entity.x || 50} />
           case 'cars':
+          case 'taxi':
             return <AnimatedCar key={entity.id} {...entity} />
           case 'scooters':
             return <ScooterSilhouette key={entity.id} {...entity} />
           case 'neon':
             return isNight || timeOfDay === 'dusk' ? (
-              <NeonSign key={entity.id} x={entity.x} y={entity.y}
-                width="60px" height="24px" color={entity.neonColor}
-                delay={entity.delay || 0} label={entity.label} />
+              <NeonCluster key={entity.id} baseX={entity.baseX} baseY={entity.baseY} />
             ) : null
           case 'birds':
             return !isNight ? <BirdFlock key={entity.id} delay={entity.delay} /> : null
@@ -676,6 +1025,26 @@ function CityAnimations({ cityName, timeOfDay }) {
             return <DoubleDecker key={entity.id} goingRight={entity.goingRight} duration={entity.duration} delay={0} />
           case 'trains':
             return <AnimatedCar key={entity.id} {...entity} carColor="#CCCCCC" scale={1.2} />
+          case 'boat':
+            return <Boat key={entity.id} goingRight={entity.goingRight} yPosition={entity.yPosition} duration={entity.duration} delay={0} boatColor={entity.boatColor} />
+          case 'cyclist':
+            return <Cyclist key={entity.id} {...entity} />
+          case 'jogger':
+            return <Jogger key={entity.id} {...entity} />
+          case 'surfer':
+            return <Surfer key={entity.id} {...entity} />
+          case 'hotdog-cart':
+            return <HotdogCart key={entity.id} x={entity.x} />
+          case 'foodtruck':
+            return <FoodTruck key={entity.id} goingRight={entity.goingRight} duration={12} delay={0} />
+          case 'guitarist':
+            return <Guitarist key={entity.id} x={entity.x} />
+          case 'foodvendor':
+            return <FoodVendor key={entity.id} x={entity.x} />
+          case 'coffee-cup':
+            return <CoffeeCup key={entity.id} x={entity.x} delay={entity.delay} />
+          case 'vending-machine':
+            return <VendingMachine key={entity.id} x={entity.x} />
           default:
             return null
         }
@@ -694,22 +1063,25 @@ function CityAnimations({ cityName, timeOfDay }) {
           100% { left: -10%; opacity: 0; }
         }
         @keyframes legSwing {
-          0% { transform: rotate(-12deg); }
-          100% { transform: rotate(12deg); }
+          0% { transform: rotate(-15deg); }
+          100% { transform: rotate(15deg); }
         }
         @keyframes armSwing {
-          0% { transform: rotate(-8deg); }
-          100% { transform: rotate(8deg); }
+          0% { transform: rotate(-20deg); }
+          100% { transform: rotate(20deg); }
         }
         @keyframes neonFlicker {
           0%, 100% { opacity: 1; }
-          5% { opacity: 0.4; }
+          5% { opacity: 0.3; }
           6% { opacity: 1; }
-          40% { opacity: 0.9; }
-          42% { opacity: 0.4; }
-          43% { opacity: 1; }
-          80% { opacity: 1; }
-          82% { opacity: 0.6; }
+          30% { opacity: 0.95; }
+          32% { opacity: 0.3; }
+          33% { opacity: 1; }
+          60% { opacity: 1; }
+          62% { opacity: 0.5; }
+          63% { opacity: 1; }
+          80% { opacity: 0.9; }
+          82% { opacity: 0.4; }
           83% { opacity: 1; }
         }
         @keyframes birdFlap {
@@ -723,8 +1095,50 @@ function CityAnimations({ cityName, timeOfDay }) {
           100% { transform: translateY(-80px) rotate(15deg); opacity: 0; }
         }
         @keyframes palmSway {
+          0% { transform: rotate(-3deg); }
+          100% { transform: rotate(3deg); }
+        }
+        @keyframes boatBob {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          25% { transform: translateY(-3px) rotate(1deg); }
+          75% { transform: translateY(2px) rotate(-1deg); }
+        }
+        @keyframes fadeInPlace {
+          0% { opacity: 0; transform: translateY(5px); }
+          100% { opacity: 0.85; transform: translateY(0); }
+        }
+        @keyframes pedalSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes guitarStrum {
           0% { transform: rotate(-2deg); }
           100% { transform: rotate(2deg); }
+        }
+        @keyframes steamWiggle {
+          0%, 100% { transform: translateX(0) translateY(0); opacity: 0.4; }
+          50% { transform: translateX(2px) translateY(-3px); opacity: 0.7; }
+        }
+        @keyframes juggle1 {
+          0% { transform: translate(0, 0); }
+          25% { transform: translate(10px, -15px); }
+          50% { transform: translate(20px, 0); }
+          75% { transform: translate(10px, -15px); }
+          100% { transform: translate(0, 0); }
+        }
+        @keyframes juggle2 {
+          0% { transform: translate(0, -15px); }
+          25% { transform: translate(10px, 0); }
+          50% { transform: translate(0, -15px); }
+          75% { transform: translate(-10px, 0); }
+          100% { transform: translate(0, -15px); }
+        }
+        @keyframes juggle3 {
+          0% { transform: translate(0, 0); }
+          25% { transform: translate(-10px, -15px); }
+          50% { transform: translate(-20px, 0); }
+          75% { transform: translate(-10px, -15px); }
+          100% { transform: translate(0, 0); }
         }
       `}</style>
     </div>
@@ -974,25 +1388,103 @@ function WindowFrame({ children, timeOfDay }) {
           <div className="absolute top-1 left-0 right-0 h-[1px] bg-white/5" />
         </div>
 
-        {/* Sheer curtain left */}
-        <div className="absolute top-0 -left-2 w-16 h-full z-25 pointer-events-none" style={{
+        {/* Left curtain — layered sheer fabric with folds */}
+        <div className="absolute top-0 -left-4 h-full z-25 pointer-events-none" style={{
+          width: '14%',
+          minWidth: '60px',
+          maxWidth: '140px',
           clipPath: 'url(#archClip)',
+          animation: 'curtainSwayLeft 6s ease-in-out infinite',
+          transformOrigin: 'top left',
         }}>
-          <div className="w-full h-full" style={{
-            background: 'linear-gradient(90deg, rgba(255,250,245,0.35) 0%, rgba(255,250,245,0.15) 50%, transparent 100%)',
-            animation: 'sheerSway 8s ease-in-out infinite',
-            transformOrigin: 'top left',
+          {/* Main curtain fabric */}
+          <div className="absolute inset-0" style={{
+            background: `linear-gradient(90deg,
+              rgba(255,248,240,0.55) 0%,
+              rgba(255,248,240,0.35) 15%,
+              rgba(255,248,240,0.45) 30%,
+              rgba(255,248,240,0.25) 50%,
+              rgba(255,248,240,0.15) 70%,
+              rgba(255,248,240,0.05) 85%,
+              transparent 100%)`,
+          }} />
+          {/* Vertical fold lines */}
+          <div className="absolute inset-0" style={{
+            background: `repeating-linear-gradient(90deg,
+              transparent 0px,
+              rgba(200,190,175,0.12) 2px,
+              transparent 4px,
+              transparent 14px,
+              rgba(200,190,175,0.08) 16px,
+              transparent 18px,
+              transparent 28px)`,
+          }} />
+          {/* Fabric drape shadow */}
+          <div className="absolute inset-0" style={{
+            background: `linear-gradient(180deg,
+              rgba(180,170,150,0.1) 0%,
+              transparent 5%,
+              transparent 15%,
+              rgba(180,170,150,0.05) 40%,
+              transparent 60%,
+              rgba(180,170,150,0.08) 85%,
+              rgba(180,170,150,0.15) 100%)`,
+          }} />
+          {/* Gathered top (curtain rod bunching) */}
+          <div className="absolute top-0 left-0 right-0 h-[3%]" style={{
+            background: `repeating-linear-gradient(90deg,
+              rgba(220,210,195,0.3) 0px,
+              rgba(255,248,240,0.4) 4px,
+              rgba(220,210,195,0.3) 8px)`,
+            borderBottom: '1px solid rgba(200,190,175,0.15)',
           }} />
         </div>
 
-        {/* Sheer curtain right */}
-        <div className="absolute top-0 -right-2 w-16 h-full z-25 pointer-events-none" style={{
+        {/* Right curtain — mirrored */}
+        <div className="absolute top-0 -right-4 h-full z-25 pointer-events-none" style={{
+          width: '14%',
+          minWidth: '60px',
+          maxWidth: '140px',
           clipPath: 'url(#archClip)',
+          animation: 'curtainSwayRight 6s 1.5s ease-in-out infinite',
+          transformOrigin: 'top right',
         }}>
-          <div className="w-full h-full" style={{
-            background: 'linear-gradient(270deg, rgba(255,250,245,0.35) 0%, rgba(255,250,245,0.15) 50%, transparent 100%)',
-            animation: 'sheerSway 8s 2s ease-in-out infinite',
-            transformOrigin: 'top right',
+          <div className="absolute inset-0" style={{
+            background: `linear-gradient(270deg,
+              rgba(255,248,240,0.55) 0%,
+              rgba(255,248,240,0.35) 15%,
+              rgba(255,248,240,0.45) 30%,
+              rgba(255,248,240,0.25) 50%,
+              rgba(255,248,240,0.15) 70%,
+              rgba(255,248,240,0.05) 85%,
+              transparent 100%)`,
+          }} />
+          <div className="absolute inset-0" style={{
+            background: `repeating-linear-gradient(270deg,
+              transparent 0px,
+              rgba(200,190,175,0.12) 2px,
+              transparent 4px,
+              transparent 14px,
+              rgba(200,190,175,0.08) 16px,
+              transparent 18px,
+              transparent 28px)`,
+          }} />
+          <div className="absolute inset-0" style={{
+            background: `linear-gradient(180deg,
+              rgba(180,170,150,0.1) 0%,
+              transparent 5%,
+              transparent 15%,
+              rgba(180,170,150,0.05) 40%,
+              transparent 60%,
+              rgba(180,170,150,0.08) 85%,
+              rgba(180,170,150,0.15) 100%)`,
+          }} />
+          <div className="absolute top-0 left-0 right-0 h-[3%]" style={{
+            background: `repeating-linear-gradient(270deg,
+              rgba(220,210,195,0.3) 0px,
+              rgba(255,248,240,0.4) 4px,
+              rgba(220,210,195,0.3) 8px)`,
+            borderBottom: '1px solid rgba(200,190,175,0.15)',
           }} />
         </div>
 
@@ -1005,10 +1497,19 @@ function WindowFrame({ children, timeOfDay }) {
       </div>
 
       <style>{`
-        @keyframes sheerSway {
+        @keyframes curtainSwayLeft {
           0%, 100% { transform: skewX(0deg) translateX(0); }
-          30% { transform: skewX(0.8deg) translateX(2px); }
-          70% { transform: skewX(-0.3deg) translateX(-1px); }
+          20% { transform: skewX(0.6deg) translateX(3px); }
+          40% { transform: skewX(0.2deg) translateX(1px); }
+          60% { transform: skewX(0.8deg) translateX(4px); }
+          80% { transform: skewX(0.3deg) translateX(2px); }
+        }
+        @keyframes curtainSwayRight {
+          0%, 100% { transform: skewX(0deg) translateX(0); }
+          20% { transform: skewX(-0.6deg) translateX(-3px); }
+          40% { transform: skewX(-0.2deg) translateX(-1px); }
+          60% { transform: skewX(-0.8deg) translateX(-4px); }
+          80% { transform: skewX(-0.3deg) translateX(-2px); }
         }
       `}</style>
     </div>
@@ -1214,7 +1715,7 @@ export default function App() {
 
             <WeatherEffects weatherType={weatherType} timeOfDay={timeOfDay} />
             <StarsEffect timeOfDay={timeOfDay} />
-            <CityAnimations cityName={location?.city || 'New York'} timeOfDay={timeOfDay} />
+            <CityAnimations cityName={location?.city || 'New York'} timeOfDay={timeOfDay} weatherType={weatherType} />
 
             {imageLoading && <ImageLoadingIndicator />}
 
